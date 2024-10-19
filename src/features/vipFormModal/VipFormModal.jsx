@@ -10,16 +10,15 @@ const schema = yup
   .object({
     firstName: yup.string().required("First name is required"),
     lastName: yup.string().required("Last name is required"),
-    licensePlate: yup.string().required("License plate is required"),
+    licensePlate: yup
+      .string()
+      .matches(/^[0-9ก-ฮ][ก-ฮ][ก-ฮ]? [0-9]{1,4}$/,"Lincese is incorrect pattern")
+      .required("License plate is required"),
     tel: yup
       .string()
       .matches(/^[0-9]+$/, "Tel must be only digits")
       .min(10, "Tel must be at least 10 digits")
       .required("Tel is required"),
-    email: yup
-      .string()
-      .email("Invalid email format")
-      .required("Email is required"),
   })
   .required();
 
@@ -36,12 +35,11 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
     if (vipId) {
       console.log("update vip", vipId, data);
     } else {
-      console.log("create vip",data);
+      console.log("create vip", data);
     }
     reset();
     handleClose();
   };
-
 
   const onCloseModal = () => {
     handleClose();
@@ -49,7 +47,7 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
   };
 
   const onDelete = () => {
-    console.log("delete",vipId);
+    console.log("delete", vipId);
     handleClose();
   };
 
@@ -74,7 +72,8 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
               )}
 
               <h2 className="text-3xl font-bold">
-                {vipId ? "รายละเอียดสมาชิก VIP" : "สมัครสมาชิก VIP"} {/*vipId ? 'มีid(หน้าedit)' : 'ไม่มีid(หน้าสมัคร)'*/}
+                {vipId ? "รายละเอียดสมาชิก VIP" : "สมัครสมาชิก VIP"}{" "}
+                {/*vipId ? 'มีid(หน้าedit)' : 'ไม่มีid(หน้าสมัคร)'*/}
               </h2>
             </div>
 
@@ -136,21 +135,6 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
                 {errors.tel && (
                   <span className=" text-xs text-error">
                     {errors.tel.message}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-gray-700 mb-2">อีเมล</label>
-                <input
-                  {...register("email")}
-                  type="text"
-                  placeholder="your@example.com"
-                  className="w-full border p-2 rounded"
-                />
-                {errors.email && (
-                  <span className=" text-xs text-error">
-                    {errors.email.message}
                   </span>
                 )}
               </div>
