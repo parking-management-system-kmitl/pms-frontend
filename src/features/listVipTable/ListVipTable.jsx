@@ -60,10 +60,9 @@ function ListVipTable() {
             >
               <td className="px-4 py-3">{index+1}</td>
               <td className="px-4 py-3">{row.licensePlate}</td>
-              <td className="px-4 py-3">{row.province}</td>
               <td className="px-4 py-3">{row.name}</td>
-              <td className="px-4 py-3">{row.email}</td>
               <td className="px-4 py-3">{row.phoneNumber}</td>
+              <td className="px-4 py-3">{row.expired}</td>
               <td className="px-4 py-3">
                 <button onClick={() => handleOpenForm(row.id)}>
                   <PencilSquareIcon className="w-5 h-5 text-primary" />
