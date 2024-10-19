@@ -26,7 +26,19 @@ git commit -m "✨ [GIFT] Update new table header"
 ---
 
 ## Conflict case
- กรณีถ้าเจอ conflict หรือกดเปิด pull request ไม่ได้ให้แก้ conflict ก่อนโดย 
+ กรณีถ้าเจอ conflict หรือกดเปิด pull request ไม่ได้ให้แก้ conflict ก่อนโดย มีวิธีแก้สองวิธี
+ ### 1. github 
+ ถ้ากดปุ่ม `open pull request` ได้ก็ใช้วิธีที่ 1 ได้ แก้ตามนี้
+ กดปุ่ม `resolve conflict` จะเข้าไปเจอหน้าที่รวม conflict ทั้งหมด จะได้ไฟล์หน้าตาประมาณนี้อยู่
+ ```javascript
+<<<<<<< HEAD
+const greeting = "Hello from branch develop!";
+=======
+const greeting = "Hello from branch feature/gift!";
+>>>>>>> feature/gift
+```
+จะเห็นว่า มี `HEAD` คืออันที่มีอยู่ ส่วน `feature/gift` ในตัวอย่างคือ branch เรา จุดนี้ต้องถามว่า dev คนอื่นๆในทีมว่าจะ merge ยังไง อันไหนใช้บ้าง บลาๆๆๆ
+ ### 2. git command (advance)
  1. เช็คก่อนว่าอยู่ branch ที่ตัวเอง dev มั้ย ถ้าอยู่ก็ไปข้อต่อไป
  2. จากนั้น pull branch develop ตามนี้
  ```bash
