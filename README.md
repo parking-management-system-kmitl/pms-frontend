@@ -1,70 +1,81 @@
-# Getting Started with Create React App
+# Github 101
+## Branch
+- master: สำหรับ deploy (ทำ pipeline CI/CD)
+- develop: สำหรับ dev และ test (รวม code ทุกคน)
+- feaure/{name}: branch แยกสำหรับแต่ละคน
+---
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Step by Step
+1. checkout มา branch ตัวเองก่อน
+```bash
+git checkout feature/gift
+```
+2. เมื่อ dev เสร็จให้ commit โดยมี pattern ดังนี้ `{gitmoji} [{option}] {description}` 
 
-## Available Scripts
+    - [gitmoji](https://gitmoji.dev/): emoji ที่แสดงแต่ละความหมายของการ commit เช่น ✨ หมายถึง new feature
+    - name: ชื่อเราพิมพ์ใหญ่ทั้งหมดเช่น **GIFT**, **FEB**
+    - description: คำอธิบาย commit
 
-In the project directory, you can run:
+ตัวอย่าง commit
+```bash
+git commit -m "✨ [GIFT] Update new table header"
+```
+3. commit เสร็จ push เข้า branch ตัวเองได้เลย
+4. เมื่อจะรวม code ของเราเข้ากับคนอื่น เปิด Pull request โดยเข้าไปที่ repo ใน github กดแท็บ `Pull request` แล้วก็กดปุ่ม [New pull request](https://github.com/parking-management-system-kmitl/pms-frontend/compare) จากนั้นเลือก `compare` เป็น branch เราและ `base` เป็น `develop` จากนั้นกดปุ่ม `Create pull request` ถ้าไม่มี conflict หรือ error ก็ merge ได้เลย แต่ถ้ามี conflict!! ดูตามนี้ [conflict case](#conflict-case)
+5. ถ้าทำ CI/CD ที่ branch master แล้วกดทำ pull request และ merge เข้าไปที่ branch master ได้เลย
+---
 
-### `npm start`
+## Conflict case
+ กรณีถ้าเจอ conflict หรือกดเปิด pull request ไม่ได้ให้แก้ conflict ก่อนโดย มีวิธีแก้สองวิธี
+ ### 1. github 
+ ถ้ากดปุ่ม `open pull request` ได้ก็ใช้วิธีที่ 1 ได้ แก้ตามนี้
+ กดปุ่ม `resolve conflict` จะเข้าไปเจอหน้าที่รวม conflict ทั้งหมด จะได้ไฟล์หน้าตาประมาณนี้อยู่
+ ```javascript
+<<<<<<< HEAD
+const greeting = "Hello from branch develop!";
+=======
+const greeting = "Hello from branch feature/gift!";
+>>>>>>> feature/gift
+```
+จะเห็นว่า มี `HEAD` คืออันที่มีอยู่ ส่วน `feature/gift` ในตัวอย่างคือ branch เรา จุดนี้ต้องถามว่า dev คนอื่นๆในทีมว่าจะ merge ยังไง อันไหนใช้บ้าง บลาๆๆๆ
+ ### 2. git command (advance)
+ 1. เช็คก่อนว่าอยู่ branch ที่ตัวเอง dev มั้ย ถ้าอยู่ก็ไปข้อต่อไป
+ 2. จากนั้น pull branch develop ตามนี้
+ ```bash
+ git pull origin develop
+ ```
+ โดยถ้าขึ้นแบบนี้
+```log
+hint: You have divergent branches and need to specify how to reconcile them.
+hint: You can do so by running one of the following commands sometime before
+hint: your next pull:
+hint: 
+hint:   git config pull.rebase false  # merge
+hint:   git config pull.rebase true   # rebase
+hint:   git config pull.ff only       # fast-forward only
+hint: 
+hint: You can replace "git config" with "git config --global" to set a default
+hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+hint: or --ff-only on the command line to override the configured default per
+hint: invocation.
+```
+แสดงว่าเรายังไม่ได้ตั้งค่า pull rebase ถ้าไม่มีข้ามไปข้อต่อไป ในที่นี้บังคับใช้เป็น pull.rebase false โดยใช้คำสั่งนี้
+```bash
+git config pull.rebase false
+```
+จากนั้นก็ 
+```bash
+git pull origin develop
+```
+3. จากนั้นจะมีให้แก้ conflict ใน code เช่น
+```javascript
+<<<<<<< HEAD
+const greeting = "Hello from branch develop!";
+=======
+const greeting = "Hello from branch feature/gift!";
+>>>>>>> feature/gift
+```
+จะเห็นว่า มี `HEAD` คืออันที่มีอยู่ ส่วน `feature/gift` ในตัวอย่างคือ branch เรา จุดนี้ต้องถามว่า dev คนอื่นๆในทีมว่าจะ merge ยังไง อันไหนใช้บ้าง บลาๆๆๆ
+4. จากนนั้น commit ตาม push ตามปกติ
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
