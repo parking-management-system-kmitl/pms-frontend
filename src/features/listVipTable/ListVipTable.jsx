@@ -31,7 +31,7 @@ function ListVipTable() {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">การจัดการสมาชิก VIP</h1>
+        <h1 className="text-3xl font-bold">รายการสมาชิก VIP</h1>
         <button
           className="bg-primary rounded-lg px-7 py-2 text-white"
           onClick={() => handleOpenForm()}
