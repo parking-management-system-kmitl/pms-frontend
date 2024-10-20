@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import { Layout } from "./layouts";
 import DetailPage from "./pages/detailPage/DetailPage";
 import LandingPage from "./pages/landingPage/LandingPage";
@@ -73,6 +73,10 @@ const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "*",
+    element: <Navigate to="/landing" replace />
+  }
 ]);
 
 const AppRouter = () => {

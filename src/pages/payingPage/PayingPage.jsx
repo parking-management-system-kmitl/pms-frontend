@@ -2,24 +2,19 @@ import { ArrowDownIcon, ArrowDownTrayIcon, ChevronDownIcon, ShareIcon } from "@h
 import React, { useState, useEffect } from "react";
 import ThaiQR from "../../assets/ThaiQR.png"
 import PromptPay from "../../assets/PromptPay.png"
+// import download from "../../assets/download.png"
 import { useNavigate } from "react-router-dom";
 
 
 function PayingPage() {
     const navigate = useNavigate();
-    const [isLangOpen, setIsLangOpen] = useState(false);
-    const [language, setLanguage] = useState('TH');
 
-    const handleLanguageChange = (lang) => {
-        setLanguage(lang);
-        setIsLangOpen(false);
-    };
 
     const handleReceipt = () => {
         navigate("/receipt");
     }
 
-    const initialTime = 14 * 60 + 32;
+    const initialTime = 15 * 60 ;
     const [timeLeft, setTimeLeft] = useState(initialTime);
 
     useEffect(() => {
@@ -39,8 +34,8 @@ function PayingPage() {
     };
 
     return (
-        <>
-            <div className="px-4 pt-[70px]">
+        <div>
+            <div className="px-4 pt-10">
                 <div className="p-6 border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-[96px] items-center space-y-1 mb-8">
                     <p className="text-md">เวลาที่เหลือสำหรับการชำระเงิน</p>
                     <p className="text-[#007AFF] text-2xl">{formatTime()}</p>
@@ -63,21 +58,25 @@ function PayingPage() {
 
                     <div className=" w-full flex justify-center items-center mt-6">
                         <div className=" flex flex-col justify-center items-center w-auto h-auto p-2">
+                    {/* <img src={download} alt="download" className="w-8 h-8" /> */}
                             <button className=" rounded-2xl border-[0.5px] p-2 border-gray-300 w-8 h-8 flex justify-center items-center">
                                 <ArrowDownTrayIcon className=" w-auto h-auto" />
                             </button>
                             <p className=" mt-2 text-sm">บันทึก QR</p>
                         </div>
                     </div>
+                    <div className="  flex justify-center items-center mt-6 h-24 w-full"></div>
                 </div>
 
-            </div>
-            <div className=" flex flex-col justify-center items-end space-y-4 w-full pt-6 pb-11 absolute bottom-0 p-4 border-t-[0.5px] border-gray-300 " style={{ boxShadow: '0 -2px 6px rgba(209, 213, 219, 1)' }}>
+            </div >
+            <div className=" flex flex-col justify-center items-end inset-x-0 space-y-4 w-full fixed bottom-0 p-4 border-t-[0.5px] border-gray-300 bg-white h-24">
                 <button onClick={handleReceipt} className=" w-full flex justify-center items-center bg-[#007AFF] text-white p-3 rounded-[20px] shadow-md font-medium text-md">
                     ตรวจสอบ
                 </button>
             </div>
-        </>
+            
+            
+        </div>
     );
 }
 
