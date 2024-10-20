@@ -6,9 +6,10 @@
 ---
 
 ## Step by Step
-1. checkout มา branch ตัวเองก่อน
+1. checkout มา branch ตัวเองก่อน แล้วก็ pull จาก branch `develop` มาให้โค้ดเหมือนกับเพื่อน ตรงนี้อย่าลืม!!!
 ```bash
 git checkout feature/gift
+git pull origin develop
 ```
 2. เมื่อ dev เสร็จให้ commit โดยมี pattern ดังนี้ `{gitmoji} [{option}] {description}` 
 
