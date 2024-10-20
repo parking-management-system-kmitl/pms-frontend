@@ -86,55 +86,55 @@ function DetailPage() {
             <div>
             <div className="img-group">
               <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img1" src="/images/cat.jpg" alt="cat" />
+                <img className="big-img" id="img1" src="/images/car_pic_example.png" alt="cat" />
                 <span className="zoom-label">Zoom</span>
               </div>
               <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img2" src="/images/cat.jpg" alt="cat" />
+                <img className="big-img" id="img2" src="/images/car_pic_example.png" alt="cat" />
                 <span className="zoom-label">Zoom</span>
               </div>
               <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img3" src="/images/cat.jpg" alt="cat" />
+                <img className="big-img" id="img3" src="/images/car_pic_example.png" alt="cat" />
                 <span className="zoom-label">Zoom</span>
               </div>
               <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img4" src="/images/cat.jpg" alt="cat" />
+                <img className="big-img" id="img4" src="/images/car_pic_example.png" alt="cat" />
                 <span className="zoom-label">Zoom</span>
               </div>
               <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img5" src="/images/cat.jpg" alt="cat" />
+                <img className="big-img" id="img5" src="/images/car_pic_example.png" alt="cat" />
                 <span className="zoom-label">Zoom</span>
               </div>
               <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img6" src="/images/cat.jpg" alt="cat" />
+                <img className="big-img" id="img6" src="/images/car_pic_example.png" alt="cat" />
                 <span className="zoom-label">Zoom</span>
               </div>
               <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img7" src="/images/cat.jpg" alt="cat" />
+                <img className="big-img" id="img7" src="/images/car_pic_example.png" alt="cat" />
                 <span className="zoom-label">Zoom</span>
               </div>
               <div className="mini-img-group">
                   <img
                     id="mini-img1"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
                   <img
                     id="mini-img2"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
                   <img
                     id="mini-img3"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
                   <img
                     id="mini-img4"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
