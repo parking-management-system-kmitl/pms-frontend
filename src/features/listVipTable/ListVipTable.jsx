@@ -45,7 +45,7 @@ function ListVipTable() {
             {VIP_TABLE_HEADER.map((label) => (
               <th
                 key={label}
-                className="border-b bg-blue-200 px-4 py-3 text-left text-gray-700 text-sm font-bold"
+                className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold"
               >
                 {label}
               </th>
@@ -56,7 +56,7 @@ function ListVipTable() {
           {MOCK_VIP_TABLE.map((row,index) => (
             <tr
               key={row.id}
-              className="border-b text-gray-700 text-sm font-thin"
+              className="border-b text-black text-sm font-thin"
             >
               <td className="px-4 py-3">{index+1}</td>
               <td className="px-4 py-3">{row.licensePlate}</td>

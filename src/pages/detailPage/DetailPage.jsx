@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AOS from "aos";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
-import { MOCK_DATA_API } from "../../features/listVipTable/constants"; //ยืมก่อน เดี๋ยวค่อยแก้ เขาไม่รู้
+import { MOCK_DATA_API , CARDETAIL_TABLE_HEADER , MOCK_CARDETAIL_TABLE} from "../../features/carDetailModal/constants"; //ยืมก่อน เดี๋ยวค่อยแก้ เขาไม่รู้
 import "aos/dist/aos.css";
 import "./DetailPage.css";
 import { CarDetailModal } from "../../features/carDetailModal";
@@ -84,52 +84,62 @@ function DetailPage() {
               </div>
             </div>
             <div>
-              <div className="img-group">
-                <img
-                  id="img1"
-                  src="/images/cat.jpg"
-                  alt="cat"
-                  data-aos="zoom-out"
-                />
-                <img
-                  id="img2"
-                  src="/images/cat.jpg"
-                  alt="cat"
-                  data-aos="zoom-out"
-                />
-                <img
-                  id="img3"
-                  src="/images/cat.jpg"
-                  alt="cat"
-                  data-aos="zoom-out"
-                />
-                <div className="mini-img-group">
+            <div className="img-group">
+              <div className="img-container" data-aos="zoom-out">
+                <img className="big-img" id="img1" src="/images/car_pic_example.png" alt="cat" />
+                <span className="zoom-label">Zoom</span>
+              </div>
+              <div className="img-container" data-aos="zoom-out">
+                <img className="big-img" id="img2" src="/images/car_pic_example.png" alt="cat" />
+                <span className="zoom-label">Zoom</span>
+              </div>
+              <div className="img-container" data-aos="zoom-out">
+                <img className="big-img" id="img3" src="/images/car_pic_example.png" alt="cat" />
+                <span className="zoom-label">Zoom</span>
+              </div>
+              <div className="img-container" data-aos="zoom-out">
+                <img className="big-img" id="img4" src="/images/car_pic_example.png" alt="cat" />
+                <span className="zoom-label">Zoom</span>
+              </div>
+              <div className="img-container" data-aos="zoom-out">
+                <img className="big-img" id="img5" src="/images/car_pic_example.png" alt="cat" />
+                <span className="zoom-label">Zoom</span>
+              </div>
+              <div className="img-container" data-aos="zoom-out">
+                <img className="big-img" id="img6" src="/images/car_pic_example.png" alt="cat" />
+                <span className="zoom-label">Zoom</span>
+              </div>
+              <div className="img-container" data-aos="zoom-out">
+                <img className="big-img" id="img7" src="/images/car_pic_example.png" alt="cat" />
+                <span className="zoom-label">Zoom</span>
+              </div>
+              <div className="mini-img-group">
                   <img
                     id="mini-img1"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
                   <img
                     id="mini-img2"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
                   <img
                     id="mini-img3"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
                   <img
                     id="mini-img4"
-                    src="/images/cat.jpg"
+                    src="/images/car_pic_example.png"
                     alt="cat"
                     data-aos="zoom-out-down"
                   />
                 </div>
-              </div>
+            </div>
             </div>
           </div>
 
@@ -139,27 +149,27 @@ function DetailPage() {
                 <table border="1" className="info-table">
                   <thead>
                     <tr>
-                      <th>คันที่</th>
-                      <th>เลขทะเบียนรถ</th>
-                      <th>วันที่</th>
-                      <th>เวลาเข้า</th>
-                      <th>เวลาออก</th>
-                      <th>ระยะเวลาการจอด</th>
-                      <th>ค่าบริการ (บาท)</th>
-                      <th>หมายเหตุ</th>
+                    {CARDETAIL_TABLE_HEADER.map((label) => (
+                      <th
+                        key={label}
+                        className="border-b bg-blue-200 text-left px-4 py-3 text-gray-700 text-sm font-bold"
+                      >
+                        {label}
+                      </th>
+                    ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({ length: rowsPerPage }).map((_, rowIndex) => (
-                      <tr
-                        key={rowIndex}
-                        onClick={() => handleRowClick(rowIndex)}
-                      >
-                        {Array.from({ length: columns }).map((_, colIndex) => (
-                          <td key={colIndex}>
-                            R {rowIndex + 1}, C {colIndex + 1}
-                          </td>
-                        ))}
+                    {MOCK_CARDETAIL_TABLE.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((row, rowIndex) => (
+                      <tr key={rowIndex} onClick={() => handleRowClick(rowIndex)}>
+                        <td>{row.id}</td>
+                        <td>{row.licensePlate}</td>
+                        <td>{row.date}</td>
+                        <td>{row.checkInTime}</td>
+                        <td>{row.checkOutTime}</td>
+                        <td>{row.duration}</td>
+                        <td>{row.serviceFee}</td>
+                        <td>{row.remarks}</td>
                       </tr>
                     ))}
                   </tbody>
