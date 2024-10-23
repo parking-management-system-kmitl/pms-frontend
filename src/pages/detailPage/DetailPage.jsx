@@ -23,7 +23,10 @@ function DetailPage() {
   const handleRowClick = (rowIndex) => {
     setSelectedRow(rowIndex);
     setModalVisible(true);
+    console.log(modalVisible);
+    console.log(rowIndex);
   };
+  
 
   const closeModal = () => {
     setModalVisible(false);
@@ -209,7 +212,6 @@ function DetailPage() {
               </button>
             </div>
           </div>
-
           <CarDetailModal
             isVisible={modalVisible}
             onClose={closeModal}
