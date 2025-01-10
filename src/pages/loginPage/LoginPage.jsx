@@ -21,7 +21,7 @@ function LoginPage() {
           className="flex flex-col justify-center items-center w-2/5 h-[95vh] mx-[2.5vh] px-20 bg-gradient-to-b from-[#004896] to-[#0a81ff] text-white rounded-2xl gap-24"
           data-aos="fade-right"
         >
-          <h1 className="text-4xl font-bold">Admin Login</h1>
+          <h1 className="text-4xl font-bold">Vehicle parking system</h1>
           <img
             src="/images/login-logo.png"
             width={400}

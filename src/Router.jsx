@@ -6,6 +6,7 @@ import LandingPage from "./pages/landingPage/LandingPage";
 import PayingPage from "./pages/payingPage/PayingPage";
 import ReceiptPage from "./pages/receiptPage/ReceiptPage";
 import { SpinnerLoading } from "./components";
+import ManagePage from "./pages/managePage/ManagePage";
 
 const LoginPage = lazy(() => import("./pages/loginPage/LoginPage"));
 const ListVipPage = lazy(() => import("./pages/listVipPage/ListVipPage"));
@@ -68,6 +69,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<SpinnerLoading />}>
             <DemoReduxPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/manage",
+        element: (
+          <Suspense fallback={<SpinnerLoading />}>
+            <ManagePage />
           </Suspense>
         ),
       },

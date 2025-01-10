@@ -1,19 +1,18 @@
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import React from "react";
-import { iconCar, iconVIP, avatar } from "../../../assets";
+import { iconCar, iconVIP, avatar, iconManage } from "../../../assets";
 import { NavLink } from "react-router-dom";
 
 function NavbarAdmin() {
   const menuItems = [
     { label: "Car", icon: iconCar, path: "/detail" },
     { label: "VIP", icon: iconVIP, path: "/listvip" },
-    { label: "Redux", icon: iconVIP, path: "/demo-redux" },
+    { label: "Manage", icon: iconManage, path: "/manage" },
   ];
   return (
     <nav className="fixed">
       <div className=" bg-primary w-[80px]  h-screen flex flex-col justify-start items-center space-y-8">
         <div className=" flex flex-col space-y-4 justify-start items-center w-full mt-11">
-          <Bars3Icon className=" w-6 h-6 text-white" />
           <div className="w-12 h-12">
             <img
               src={avatar}
