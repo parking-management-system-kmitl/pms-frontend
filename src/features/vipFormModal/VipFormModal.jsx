@@ -22,7 +22,59 @@ const schema = yup
   })
   .required();
 
+
+
+
 function VipFormModal({ isOpen, handleClose, vipId }) {
+
+  const apiUrl = process.env.REACT_APP_API_URL;
+
+  const [formData, setFormData] = useState({
+    fname: "",
+    lname: "",
+    tel: "" 
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleRegVip = async (e) => {
+    e.preventDefault();
+    try {
+      console.log("start login");
+      const response = await fetch(`${apiUrl}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      // แสดงข้อมูล response ทั้งหมด
+      const data = await response.json();
+
+      if (response.ok && data.status === "success") {
+        
+        
+      } else {
+        console.log("Regist failed");
+      }
+
+
+
+    } catch (error) {
+      console.error("Error during login:", error);
+    }
+  };
+  
+
+
+
   const {
     register,
     handleSubmit,
@@ -84,6 +136,11 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
                   <input
                     {...register("firstName")}
                     type="text"
+                    id="fname"
+                    name="fname"
+                    value={formData.fname}
+                    onChange={handleChange}
+                    
                     placeholder="ชื่อภาษาไทย"
                     className="w-full border p-2 rounded"
                   />
@@ -98,6 +155,11 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
                   <input
                     {...register("lastName")}
                     type="text"
+                    id="lname"
+                    name="lname"
+                    value={formData.lname}
+                    onChange={handleChange}
+                    
                     placeholder="นามสกุลภาษาไทย"
                     className="w-full border p-2 rounded"
                   />
