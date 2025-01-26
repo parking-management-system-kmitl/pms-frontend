@@ -1,6 +1,9 @@
 import React from "react";
 
 function CarDetailModal({ isVisible, onClose, selectedRow, selectedDiscount, setSelectedDiscount }) {
+  if (!selectedRow) return null;
+  const { licenseplate, entrytime, exittime, duration, fee } = selectedRow;
+
   const modalStyles = {
     position: 'fixed',
     top: 0,

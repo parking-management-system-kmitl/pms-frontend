@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AOS from "aos";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
-import { MOCK_DATA_API , CARDETAIL_TABLE_HEADER , MOCK_CARDETAIL_TABLE} from "../../features/carDetailModal/constants"; //ยืมก่อน เดี๋ยวค่อยแก้ เขาไม่รู้
 import "aos/dist/aos.css";
 import "./DetailPage.css";
 import { CarDetailModal } from "../../features/carDetailModal";
@@ -17,16 +16,46 @@ function DetailPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedDiscount, setSelectedDiscount] = useState("");
+  const [data, setData] = useState([]);
+  const [totalRows, setTotalRows] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
 
-  const columns = 8;
+  const apiUrl = process.env.REACT_APP_API_URL;
+
+  const fetchData = async (currentPage, limit) => {
+    try {
+      const response = await fetch(`${apiUrl}/entry-exit/list/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          page: currentPage,
+          limit: limit,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.status === "success") {
+        setData(result.data.items);
+        setTotalRows(result.data.meta.total);
+        setPageCount(result.data.meta.totalPages);
+      } else {
+        console.error("Failed to fetch data:", result);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(page, rowsPerPage);
+  }, [page, rowsPerPage]);
 
   const handleRowClick = (rowIndex) => {
     setSelectedRow(rowIndex);
     setModalVisible(true);
-    console.log(modalVisible);
-    console.log(rowIndex);
   };
-  
 
   const closeModal = () => {
     setModalVisible(false);
@@ -35,11 +64,9 @@ function DetailPage() {
 
   const getCurrentRowRange = () => {
     const startRange = (page - 1) * rowsPerPage + 1;
-    const endRange = Math.min(page * rowsPerPage, MOCK_DATA_API.rows);
-    return `${startRange}-${endRange} of ${MOCK_DATA_API.rows}`;
+    const endRange = Math.min(page * rowsPerPage, totalRows);
+    return `${startRange}-${endRange} of ${totalRows}`;
   };
-
-  const pageCount = Math.ceil(MOCK_DATA_API.rows / MOCK_DATA_API.pageSize);
 
   const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -87,36 +114,71 @@ function DetailPage() {
               </div>
             </div>
             <div>
-            <div className="img-group">
-              <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img1" src="/images/car_pic_example.png" alt="cat" />
-                <span className="zoom-label">Zoom</span>
-              </div>
-              <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img2" src="/images/car_pic_example.png" alt="cat" />
-                <span className="zoom-label">Zoom</span>
-              </div>
-              <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img3" src="/images/car_pic_example.png" alt="cat" />
-                <span className="zoom-label">Zoom</span>
-              </div>
-              <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img4" src="/images/car_pic_example.png" alt="cat" />
-                <span className="zoom-label">Zoom</span>
-              </div>
-              <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img5" src="/images/car_pic_example.png" alt="cat" />
-                <span className="zoom-label">Zoom</span>
-              </div>
-              <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img6" src="/images/car_pic_example.png" alt="cat" />
-                <span className="zoom-label">Zoom</span>
-              </div>
-              <div className="img-container" data-aos="zoom-out">
-                <img className="big-img" id="img7" src="/images/car_pic_example.png" alt="cat" />
-                <span className="zoom-label">Zoom</span>
-              </div>
-              <div className="mini-img-group">
+              <div className="img-group">
+                <div className="img-container" data-aos="zoom-out">
+                  <img
+                    className="big-img"
+                    id="img1"
+                    src="/images/car_pic_example.png"
+                    alt="cat"
+                  />
+                  <span className="zoom-label">Zoom</span>
+                </div>
+                <div className="img-container" data-aos="zoom-out">
+                  <img
+                    className="big-img"
+                    id="img2"
+                    src="/images/car_pic_example.png"
+                    alt="cat"
+                  />
+                  <span className="zoom-label">Zoom</span>
+                </div>
+                <div className="img-container" data-aos="zoom-out">
+                  <img
+                    className="big-img"
+                    id="img3"
+                    src="/images/car_pic_example.png"
+                    alt="cat"
+                  />
+                  <span className="zoom-label">Zoom</span>
+                </div>
+                <div className="img-container" data-aos="zoom-out">
+                  <img
+                    className="big-img"
+                    id="img4"
+                    src="/images/car_pic_example.png"
+                    alt="cat"
+                  />
+                  <span className="zoom-label">Zoom</span>
+                </div>
+                <div className="img-container" data-aos="zoom-out">
+                  <img
+                    className="big-img"
+                    id="img5"
+                    src="/images/car_pic_example.png"
+                    alt="cat"
+                  />
+                  <span className="zoom-label">Zoom</span>
+                </div>
+                <div className="img-container" data-aos="zoom-out">
+                  <img
+                    className="big-img"
+                    id="img6"
+                    src="/images/car_pic_example.png"
+                    alt="cat"
+                  />
+                  <span className="zoom-label">Zoom</span>
+                </div>
+                <div className="img-container" data-aos="zoom-out">
+                  <img
+                    className="big-img"
+                    id="img7"
+                    src="/images/car_pic_example.png"
+                    alt="cat"
+                  />
+                  <span className="zoom-label">Zoom</span>
+                </div>
+                <div className="mini-img-group">
                   <img
                     id="mini-img1"
                     src="/images/car_pic_example.png"
@@ -142,7 +204,7 @@ function DetailPage() {
                     data-aos="zoom-out-down"
                   />
                 </div>
-            </div>
+              </div>
             </div>
           </div>
 
@@ -151,30 +213,31 @@ function DetailPage() {
               <div className="table-wrapper">
                 <table border="1" className="info-table">
                   <thead>
-                    <tr>
-                    {CARDETAIL_TABLE_HEADER.map((label) => (
-                      <th
-                        key={label}
-                        className="border-b bg-blue-200 text-left px-4 py-3 text-gray-700 text-sm font-bold"
-                      >
-                        {label}
-                      </th>
-                    ))}
+                    <tr className="border-b text-left px-4 py-3 text-gray-700 text-sm font-bold">
+                      <th className="bg-blue-200">คันที่</th>
+                      <th className="bg-blue-200">ทะเบียนรถ</th>
+                      <th className="bg-blue-200">วันที่</th>
+                      <th className="bg-blue-200">เวลาเข้า</th>
+                      <th className="bg-blue-200">เวลาออก</th>
+                      <th className="bg-blue-200">ระยะเวลา</th>
+                      <th className="bg-blue-200">ค่าบริการ</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {MOCK_CARDETAIL_TABLE.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((row, rowIndex) => (
-                      <tr key={rowIndex} onClick={() => handleRowClick(rowIndex)}>
-                        <td>{row.id}</td>
-                        <td>{row.licensePlate}</td>
-                        <td>{row.date}</td>
-                        <td>{row.checkInTime}</td>
-                        <td>{row.checkOutTime}</td>
-                        <td>{row.duration}</td>
-                        <td>{row.serviceFee}</td>
-                        <td>{row.remarks}</td>
-                      </tr>
-                    ))}
+                    {data.map((row, index) => {
+                      const serialNumber = (page - 1) * rowsPerPage + index + 1; // คำนวณลำดับคันที่
+                      return (
+                        <tr key={index} onClick={() => handleRowClick(index)}>
+                          <td>{serialNumber}</td>
+                          <td>{row.licenseplate}</td>
+                          <td>{row.date}</td>
+                          <td>{row.entrytime}</td>
+                          <td>{row.exittime}</td>
+                          <td>{row.duration}</td>
+                          <td>{row.fee}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -198,14 +261,14 @@ function DetailPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() =>
-                  setPage((prev) => (prev === 1 ? pageCount : prev - 1))
+                  setPage((prev) => (prev > 1 ? prev - 1 : pageCount))
                 }
               >
                 <ChevronLeftIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={() =>
-                  setPage((prev) => (prev === pageCount ? 1 : prev + 1))
+                  setPage((prev) => (prev < pageCount ? prev + 1 : 1))
                 }
               >
                 <ChevronRightIcon className="w-4 h-4" />
@@ -215,7 +278,7 @@ function DetailPage() {
           <CarDetailModal
             isVisible={modalVisible}
             onClose={closeModal}
-            selectedRow={selectedRow}
+            selectedRow={data[selectedRow]} // ส่งข้อมูลแถวที่เลือก
             selectedDiscount={selectedDiscount}
             setSelectedDiscount={setSelectedDiscount}
           />
