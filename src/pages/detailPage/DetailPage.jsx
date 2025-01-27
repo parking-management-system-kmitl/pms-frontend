@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import AOS from "aos";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import "aos/dist/aos.css";
-import "./DetailPage.css";
 import { CarDetailModal } from "../../features/carDetailModal";
 import PageCotainer from "../PageCotainer";
 
@@ -75,214 +74,158 @@ function DetailPage() {
 
   return (
     <PageCotainer>
-      <div className="detail-page">
-        <div className="main-container">
-          <div className="header">
-            <div className="flex items-center justify-between">
-              <h1
-                className="font-inter font-bold text-3xl"
-                data-aos="fade-right"
+      <div className="flex flex-col">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h1
+              className="font-inter font-bold text-3xl"
+              data-aos="fade-right"
+            >
+              รายการเข้า-ออกที่จอดรถ
+            </h1>
+            <div
+              className="flex items-center px-4 gap-4 bg-blue-100 text-gray-600 rounded-full w-1/3 h-12 ml-auto"
+              data-aos="fade-left"
+            >
+              <svg
+                id="lens"
+                className="w-6 h-6"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 20"
               >
-                รายการเข้า-ออกที่จอดรถ
-              </h1>
-              <div className="searchbar" data-aos="fade-left">
-                <svg
-                  id="lens"
-                  class="w-6 h-6"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 20"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                  />
-                </svg>
-
-                <form>
-                  <input
-                    type="text"
-                    id="carname"
-                    name="carname"
-                    placeholder="ค้นหาป้ายทะเบียน"
-                  />
-                </form>
-              </div>
-            </div>
-            <div>
-              <div className="img-group">
-                <div className="img-container" data-aos="zoom-out">
-                  <img
-                    className="big-img"
-                    id="img1"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                  />
-                  <span className="zoom-label">Zoom</span>
-                </div>
-                <div className="img-container" data-aos="zoom-out">
-                  <img
-                    className="big-img"
-                    id="img2"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                  />
-                  <span className="zoom-label">Zoom</span>
-                </div>
-                <div className="img-container" data-aos="zoom-out">
-                  <img
-                    className="big-img"
-                    id="img3"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                  />
-                  <span className="zoom-label">Zoom</span>
-                </div>
-                <div className="img-container" data-aos="zoom-out">
-                  <img
-                    className="big-img"
-                    id="img4"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                  />
-                  <span className="zoom-label">Zoom</span>
-                </div>
-                <div className="img-container" data-aos="zoom-out">
-                  <img
-                    className="big-img"
-                    id="img5"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                  />
-                  <span className="zoom-label">Zoom</span>
-                </div>
-                <div className="img-container" data-aos="zoom-out">
-                  <img
-                    className="big-img"
-                    id="img6"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                  />
-                  <span className="zoom-label">Zoom</span>
-                </div>
-                <div className="img-container" data-aos="zoom-out">
-                  <img
-                    className="big-img"
-                    id="img7"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                  />
-                  <span className="zoom-label">Zoom</span>
-                </div>
-                <div className="mini-img-group">
-                  <img
-                    id="mini-img1"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                    data-aos="zoom-out-down"
-                  />
-                  <img
-                    id="mini-img2"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                    data-aos="zoom-out-down"
-                  />
-                  <img
-                    id="mini-img3"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                    data-aos="zoom-out-down"
-                  />
-                  <img
-                    id="mini-img4"
-                    src="/images/car_pic_example.png"
-                    alt="cat"
-                    data-aos="zoom-out-down"
-                  />
-                </div>
-              </div>
+                <path
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                />
+              </svg>
+              <input
+                type="text"
+                id="carname"
+                name="carname"
+                placeholder="ค้นหาป้ายทะเบียน"
+                className="bg-transparent outline-none w-full text-gray-600 placeholder-gray-600"
+              />
             </div>
           </div>
-
-          <div className="info mt-3">
-            <div className="table-container text-sm font-thin">
-              <div className="table-wrapper">
-                <table border="1" className="info-table">
-                  <thead>
-                    <tr className="border-b text-left px-4 py-3 text-gray-700 text-sm font-bold">
-                      <th className="bg-blue-200">คันที่</th>
-                      <th className="bg-blue-200">ทะเบียนรถ</th>
-                      <th className="bg-blue-200">วันที่</th>
-                      <th className="bg-blue-200">เวลาเข้า</th>
-                      <th className="bg-blue-200">เวลาออก</th>
-                      <th className="bg-blue-200">ระยะเวลา</th>
-                      <th className="bg-blue-200">ค่าบริการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((row, index) => {
-                      const serialNumber = (page - 1) * rowsPerPage + index + 1; // คำนวณลำดับคันที่
-                      return (
-                        <tr key={index} onClick={() => handleRowClick(index)}>
-                          <td>{serialNumber}</td>
-                          <td>{row.licenseplate}</td>
-                          <td>{row.date}</td>
-                          <td>{row.entrytime}</td>
-                          <td>{row.exittime}</td>
-                          <td>{row.duration}</td>
-                          <td>{row.fee}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+          <div className="flex w-full">
+            <div className="flex gap-5 h-50">
+              {Array(6)
+                .fill("/images/car_pic_example.png")
+                .map((src, index) => (
+                  <div
+                    key={index}
+                    className="relative flex-shrink-0 w-[15%] h-full overflow-hidden"
+                    data-aos="zoom-out"
+                  >
+                    <img
+                      className="w-full h-full rounded-xl"
+                      src={src}
+                      alt={`car-${index + 1}`}
+                    />
+                    <span className="absolute bottom-0 right-0 text-center bg-blue-500 text-white py-1 px-3 rounded-tl-lg text-sm">
+                      Zoom
+                    </span>
+                  </div>
+                ))}
             </div>
+          <div className="grid grid-cols-2 gap-2 w-1/3">
+            {Array(4)
+              .fill("/images/car_pic_example.png")
+              .map((src, index) => (
+                <img
+                  key={index}
+                  src={src}
+                  alt={`mini-car-${index + 1}`}
+                  className="w-full h-20 rounded-lg overflow-hidden"
+                  data-aos="zoom-out-down"
+                />
+              ))}
           </div>
-          <div className="flex justify-end items-center mt-4 gap-6">
-            <div className="flex items-center">
-              <p className="text-sm font-thin">Rows per page:</p>
-              <select
-                value={rowsPerPage}
-                onChange={handleRowsPerPageChange}
-                className="py-1 text-sm font-thin ml-1"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={15}>15</option>
-                <option value={20}>20</option>
-              </select>
-            </div>
-            <p className="text-sm font-thin">{getCurrentRowRange()}</p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() =>
-                  setPage((prev) => (prev > 1 ? prev - 1 : pageCount))
-                }
-              >
-                <ChevronLeftIcon className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() =>
-                  setPage((prev) => (prev < pageCount ? prev + 1 : 1))
-                }
-              >
-                <ChevronRightIcon className="w-4 h-4" />
-              </button>
-            </div>
           </div>
-          <CarDetailModal
-            isVisible={modalVisible}
-            onClose={closeModal}
-            selectedRow={data[selectedRow]} // ส่งข้อมูลแถวที่เลือก
-            selectedDiscount={selectedDiscount}
-            setSelectedDiscount={setSelectedDiscount}
-          />
         </div>
+        <div className="mt-6 overflow-auto">
+          <table className="table-auto w-full border-collapse text-gray-700">
+            <thead>
+              <tr>
+                {["คันที่", "ทะเบียนรถ", "วันที่", "เวลาเข้า", "เวลาออก", "ระยะเวลา", "ค่าบริการ"].map(
+                  (header) => (
+                    <th
+                      key={header}
+                      className="px-4 py-3 bg-blue-200 sticky top-0 text-left"
+                    >
+                      {header}
+                    </th>
+                  )
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row, index) => {
+                const serialNumber = (page - 1) * rowsPerPage + index + 1;
+                return (
+                  <tr
+                    key={index}
+                    onClick={() => handleRowClick(index)}
+                    className="border-b hover:bg-blue-50 cursor-pointer"
+                  >
+                    <td className="px-4 py-3">{serialNumber}</td>
+                    <td className="px-4 py-3">{row.licenseplate}</td>
+                    <td className="px-4 py-3">{row.date}</td>
+                    <td className="px-4 py-3">{row.entrytime}</td>
+                    <td className="px-4 py-3">{row.exittime}</td>
+                    <td className="px-4 py-3">{row.duration}</td>
+                    <td className="px-4 py-3">{row.fee} บาท</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex justify-end items-center mt-4 gap-6">
+          <div className="flex items-center gap-1">
+            <p className="text-sm text-gray-500">Rows per page:</p>
+            <select
+              value={rowsPerPage}
+              onChange={handleRowsPerPageChange}
+              className="text-sm py-1 px-2 border border-gray-300 rounded-md"
+            >
+              {[5, 10, 15, 20].map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-sm text-gray-500">{getCurrentRowRange()}</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() =>
+                setPage((prev) => (prev > 1 ? prev - 1 : pageCount))
+              }
+            >
+              <ChevronLeftIcon className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() =>
+                setPage((prev) => (prev < pageCount ? prev + 1 : 1))
+              }
+            >
+              <ChevronRightIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <CarDetailModal
+          isVisible={modalVisible}
+          onClose={closeModal}
+          selectedRow={data[selectedRow]}
+          selectedDiscount={selectedDiscount}
+          setSelectedDiscount={setSelectedDiscount}
+        />
       </div>
     </PageCotainer>
   );
