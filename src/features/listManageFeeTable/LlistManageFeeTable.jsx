@@ -162,7 +162,7 @@ function LlistManageFeeTable() {
           <tr className="bg-blue-100">
             <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">ชั่วโมง</th>
             <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">อัตราค่าบริการ (บาท/ชั่วโมง)</th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-center text-black text-sm font-bold">แก้ไข/ลบข้อมูล</th>
+            <th className="border-b bg-blue-200 px-4 py-3 text-right text-black text-sm font-bold">แก้ไข/ลบข้อมูล</th>
           </tr>
         </thead>
         <tbody className="overflow-auto">
@@ -170,7 +170,7 @@ function LlistManageFeeTable() {
             <tr key={row.id} className="border-b text-black text-sm font-thin">
               <td className="px-4 py-3">{row.hours}</td>
               <td className="px-4 py-3">{row.rate_per_hour}</td>
-              <td className="flex px-4 py-3 justify-center gap-5">
+              <td className="flex px-4 py-3 justify-end gap-5 pr-8">
                 <button onClick={() => handleEditClick(row)}>
                   <PencilSquareIcon className="w-5 h-5 text-primary" />
                 </button>
