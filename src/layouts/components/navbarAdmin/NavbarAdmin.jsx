@@ -1,6 +1,6 @@
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import React from "react";
-import { iconCar, iconVIP, avatar, iconManage } from "../../../assets";
+import { iconCar, iconVIP, avatar, iconManage, iconDashboard } from "../../../assets";
 import { NavLink } from "react-router-dom";
 
 function NavbarAdmin() {
@@ -8,6 +8,7 @@ function NavbarAdmin() {
     { label: "รถยนต์", icon: iconCar, path: "/detail" },
     { label: "VIP", icon: iconVIP, path: "/listvip" },
     { label: "การจัดการ", icon: iconManage, path: "/manage" },
+    { label: "แดชบอร์ด", icon: iconDashboard, path: "/dashboard" },
   ];
   return (
     <nav className="fixed">
