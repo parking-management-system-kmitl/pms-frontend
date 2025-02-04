@@ -5,9 +5,9 @@ import { NavLink } from "react-router-dom";
 
 function NavbarAdmin() {
   const menuItems = [
-    { label: "Car", icon: iconCar, path: "/detail" },
+    { label: "รถยนต์", icon: iconCar, path: "/detail" },
     { label: "VIP", icon: iconVIP, path: "/listvip" },
-    { label: "Manage", icon: iconManage, path: "/manage" },
+    { label: "การจัดการ", icon: iconManage, path: "/manage" },
   ];
   return (
     <nav className="fixed">

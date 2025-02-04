@@ -188,7 +188,7 @@ function DetailPage() {
         </div>
         <div className="flex justify-end items-center mt-4 gap-6">
           <div className="flex items-center gap-1">
-            <p className="text-sm text-gray-500">Rows per page:</p>
+            <p className="text-sm text-gray-500">รายการต่อหน้า :</p>
             <select
               value={rowsPerPage}
               onChange={handleRowsPerPageChange}

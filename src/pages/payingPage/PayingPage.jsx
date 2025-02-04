@@ -3,10 +3,10 @@ import React, { useState, useEffect } from "react";
 import ThaiQR from "../../assets/ThaiQR.png"
 import PromptPay from "../../assets/PromptPay.png"
 // import download from "../../assets/download.png"
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate , useParams } from "react-router-dom";
 
 function PayingPage() {
+    const { id } = useParams();
     const navigate = useNavigate();
 
 

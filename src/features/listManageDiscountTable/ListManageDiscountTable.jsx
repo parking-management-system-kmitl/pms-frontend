@@ -47,7 +47,7 @@ function ListManageDiscountTable() {
           setError(data.message || "Failed to fetch discounts.");
         }
       } catch (err) {
-        setError("An error occurred while fetching discounts.");
+        setError("เกิดข้อผิดพลาดขณะพยายาม fetch ข้อมูล.");
       } finally {
         setIsLoading(false);
       }
