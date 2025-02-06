@@ -1,5 +1,9 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import { Layout } from "./layouts";
 import DetailPage from "./pages/detailPage/DetailPage";
 import LandingPage from "./pages/landingPage/LandingPage";
@@ -7,11 +11,15 @@ import PayingPage from "./pages/payingPage/PayingPage";
 import ReceiptPage from "./pages/receiptPage/ReceiptPage";
 import { SpinnerLoading } from "./components";
 import ManagePage from "./pages/managePage/ManagePage";
+import RegisVipPage from "./pages/regisVipPage/RegisVipPage";
 import DashboardPage from "./pages/dashboardPage/DashboardPage";
+import RegisPaymentPage from "./pages/regisPaymentPage/RegisPaymentPage";
+import RegisVipReceiptPage from "./pages/regisVipReceiptPage/RegisVipReceiptPage";
+import VipErrorPage from "./pages/vipErrorPage/VipErrorPage";
 
 const LoginPage = lazy(() => import("./pages/loginPage/LoginPage"));
 const ListVipPage = lazy(() => import("./pages/listVipPage/ListVipPage"));
-const DemoReduxPage = lazy(()=>import("./pages/demoReduxPage/DemoReduxPage"))
+const DemoReduxPage = lazy(() => import("./pages/demoReduxPage/DemoReduxPage"));
 
 const router = createBrowserRouter([
   {
@@ -45,6 +53,38 @@ const router = createBrowserRouter([
         <PayingPage />
       </Suspense>
     ),
+  },
+  {
+    path: "/regisvip",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <RegisVipPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/regisvippaying",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <RegisPaymentPage />
+      </Suspense>
+    )
+  },
+  {
+    path: "/regisvipreceipt",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <RegisVipReceiptPage />
+      </Suspense>
+    )
+  },
+  {
+    path: "/404vip",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <VipErrorPage />
+      </Suspense>
+    )
   },
   {
     element: <Layout />,
@@ -91,7 +131,7 @@ const router = createBrowserRouter([
     path: "*",
     element: <Navigate to="/landing" replace />,
   },
-]);  
+]);
 
 const AppRouter = () => {
   return <RouterProvider router={router} />;
