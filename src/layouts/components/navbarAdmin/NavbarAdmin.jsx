@@ -1,6 +1,12 @@
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import React from "react";
-import { iconCar, iconVIP, avatar, iconManage, iconDashboard } from "../../../assets";
+import {
+  iconCar,
+  iconVIP,
+  avatar,
+  iconManage,
+  iconDashboard,
+} from "../../../assets";
 import { NavLink } from "react-router-dom";
 
 function NavbarAdmin() {
@@ -31,10 +37,20 @@ function NavbarAdmin() {
             >
               {({ isActive }) => (
                 <>
-                  <div className={`w-14 h-8 flex items-center justify-center transition duration-500 rounded-full hover:bg-gray-600 ${isActive ? 'bg-black':'bg-none'} `}>
+                  <div
+                    className={`w-14 h-8 flex items-center justify-center transition duration-500 rounded-full hover:bg-black hover:bg-opacity-10 ${
+                      isActive ? "bg-black" : "bg-none"
+                    } `}
+                  >
                     <img src={icon} className=" text-white w-6 h-6" />
                   </div>
-                  <p className={` text-xs transition duration-500 ${isActive ? 'text-black':'text-white'}`} >{label} </p>
+                  <p
+                    className={` text-xs transition duration-500 ${
+                      isActive ? "text-black" : "text-white"
+                    }`}
+                  >
+                    {label}{" "}
+                  </p>
                 </>
               )}
             </NavLink>

@@ -96,12 +96,11 @@ function DetailPage() {
       <div className="flex flex-col">
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-inter font-bold text-3xl" data-aos="fade-right">
+            <h1 className="font-inter font-bold text-3xl">
               รายการเข้า-ออกที่จอดรถ
             </h1>
             <div
               className="flex items-center px-4 gap-4 bg-blue-100 text-gray-600 rounded-full w-1/3 h-12 ml-auto"
-              data-aos="fade-left"
             >
               <svg
                 id="lens"

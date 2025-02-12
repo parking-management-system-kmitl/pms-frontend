@@ -38,7 +38,7 @@ function RegisPaymentPage() {
           <p className="text-[#007AFF] text-2xl">{formatTime()}</p>
         </div>
 
-        <div className=" pl-6 pr-6">
+        <div className="w-[358px] h-[356px]">
           <div className=" border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-auto items-center ">
             <div className=" flex justify-center items-center h-[57px] w-full rounded-tr-[20px] rounded-tl-[20px] bg-[#113E68]">
               <img src={ThaiQR} alt="thai_qr" className="w-[100px] " />

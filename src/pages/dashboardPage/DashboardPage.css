@@ -1,0 +1,62 @@
+/* ปรับ border และพื้นหลังของ react-datepicker */
+.react-datepicker {
+  border: none;
+  display: flex;
+}
+
+/* ลบ border ของเดือน container */
+.react-datepicker__month-container {
+  border: none;
+}
+
+.react-datepicker__current-month {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.react-datepicker__day-name {
+    font-weight: 300;
+}
+
+/* ปรับ header ของ react-datepicker */
+.react-datepicker__header {
+  border-bottom: none;
+  background-color: transparent;
+}
+
+/* ปรับวันที่ให้มีขนาดตัวอักษร และ font-weight ตามต้องการ */
+.react-datepicker__day {
+  font-size: 14px;
+  font-weight: 300;
+  color: gray;
+}
+
+/* ปรับวันที่เมื่อเลือกแล้ว */
+.react-datepicker__day--selected {
+  color: white;
+  background-color: #007aff !important;
+  
+}
+
+/* ปรับวันที่เมื่อ hover */
+.react-datepicker__day:hover {
+  background-color: #f9f7f7 !important;
+  color: #007aff !important;
+}
+
+/* ปรับวันที่ในช่วงที่ถูกเลือก */
+.react-datepicker__day--in-range {
+    background-color: #007aff !important;
+    color: white !important;
+}
+
+/* ปรับวันที่ในช่วงที่ถูกเลือกให้มีสีพื้นหลังเหมือนกับ hover */
+.react-datepicker__day--in-range:hover {
+  background-color: #f9f7f7 !important;
+  color: #007aff !important;
+}
+
+/* เปลี่ยนสีของวันเสาร์และวันอาทิตย์ใน header */
+.react-datepicker__day--weekend {
+  color: red;
+}

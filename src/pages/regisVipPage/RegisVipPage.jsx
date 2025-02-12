@@ -30,7 +30,7 @@ export default function RegisVipPage() {
             placeholder="กรอกเบอร์ติดต่อ"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="mb-4 w-full border p-2 rounded"
+            className="mb-4 w-full border p-2 rounded "
           />
         </div>
 

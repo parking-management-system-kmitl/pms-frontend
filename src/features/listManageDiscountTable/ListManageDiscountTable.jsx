@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { XCircleIcon } from "@heroicons/react/24/solid";
+import "./ListManageDiscountTable.css";
 
 function ListManageDiscountTable() {
   const [page, setPage] = useState(1);
@@ -64,6 +65,32 @@ function ListManageDiscountTable() {
   };
 
   const pageCount = Math.ceil(discounts.length / 10);
+
+  const handleToggleStatus = async (discountId) => {
+    const apiUrl = `${process.env.REACT_APP_API_URL}/parking-discounts/toggle-status`;
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: discountId }),
+      });
+      const data = await response.json();
+      if (data.status === "success") {
+        const updatedDiscounts = discounts.map((discount) =>
+          discount.id === discountId
+            ? { ...discount, is_active: data.data.is_active }
+            : discount
+        );
+        setDiscounts(updatedDiscounts);
+      } else {
+        console.error(data.message || "Failed to toggle discount status");
+      }
+    } catch (error) {
+      console.error("Error toggling discount status:", error);
+    }
+  };
 
   const handleEditClick = (discount) => {
     setEditData({
@@ -209,14 +236,21 @@ function ListManageDiscountTable() {
                   <td className="px-4 py-3">
                     {discount.customer_type === 1 ? "VIP" : "ทั่วไป"}
                   </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={
-                        discount.is_active ? "text-green-500" : "text-red-500"
-                      }
-                    >
-                      {discount.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                    </span>
+                  <td className="px-3 py-3">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <span className="mr-2 text-sm font-medium">
+                        {discount.is_active ? "" : ""}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={discount.is_active}
+                        onChange={() =>
+                          handleToggleStatus(discount.id, discount.is_active)
+                        }
+                        className="toggle-checkbox"
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
                   </td>
                   <td className="flex px-4 py-3 justify-end gap-5 pr-8">
                     <button onClick={() => handleEditClick(discount)}>
@@ -285,20 +319,38 @@ function ListManageDiscountTable() {
                 >
                   ประเภทลูกค้า
                 </label>
-                <select
-                  id="customer_type"
-                  value={editData.customer_type}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      customer_type: parseInt(e.target.value),
-                    })
-                  }
-                  className="border border-gray-300 rounded p-2 w-full h-[48px]"
-                >
-                  <option value={1}>VIP</option>
-                  <option value={2}>Regular</option>
-                </select>
+                <div className="relative">
+                  <select
+                    id="customer_type"
+                    value={editData.customer_type}
+                    onChange={(e) =>
+                      setEditData({
+                        ...editData,
+                        customer_type: parseInt(e.target.value),
+                      })
+                    }
+                    className="border border-gray-300 rounded p-2 w-full h-[48px] appearance-none pr-8"
+                  >
+                    <option value={1}>VIP</option>
+                    <option value={2}>Regular</option>
+                  </select>
+                  <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </span>
+                </div>
               </div>
               <div className="mb-4 w-full">
                 <label
@@ -351,20 +403,38 @@ function ListManageDiscountTable() {
               <label htmlFor="is_active" className="block text-sm font-medium">
                 สถานะโปรโมชั่น
               </label>
-              <select
-                id="is_active"
-                value={editData.is_active}
-                onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    is_active: e.target.value === "true",
-                  })
-                }
-                className="border border-gray-300 rounded p-2 w-full"
-              >
-                <option value={true}>เปิดใช้งาน</option>
-                <option value={false}>ปิดใช้งาน</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="is_active"
+                  value={editData.is_active}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      is_active: e.target.value === "true",
+                    })
+                  }
+                  className="border border-gray-300 rounded p-2 w-full h-[48px] appearance-none pr-8"
+                >
+                  <option value={true}>เปิดใช้งาน</option>
+                  <option value={false}>ปิดใช้งาน</option>
+                </select>
+                <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
             </div>
             <div className="flex justify-end gap-3">
               <button
@@ -416,20 +486,38 @@ function ListManageDiscountTable() {
                 >
                   ประเภทลูกค้า
                 </label>
-                <select
-                  id="customer_type"
-                  value={newDiscount.customer_type}
-                  onChange={(e) =>
-                    setNewDiscount({
-                      ...newDiscount,
-                      customer_type: parseInt(e.target.value),
-                    })
-                  }
-                  className="border border-gray-300 rounded p-2 w-full h-[48px]"
-                >
-                  <option value={1}>VIP</option>
-                  <option value={2}>ทั่วไป</option>
-                </select>
+                <div className="relative">
+                  <select
+                    id="customer_type"
+                    value={newDiscount.customer_type}
+                    onChange={(e) =>
+                      setNewDiscount({
+                        ...newDiscount,
+                        customer_type: parseInt(e.target.value),
+                      })
+                    }
+                    className="border border-gray-300 rounded p-2 w-full h-[48px] appearance-none pr-8"
+                  >
+                    <option value={1}>VIP</option>
+                    <option value={2}>ทั่วไป</option>
+                  </select>
+                  <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </span>
+                </div>
               </div>
               <div className="mb-4 w-full">
                 <label

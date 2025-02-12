@@ -32,19 +32,7 @@ const Dashboard = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [selectedRange, setSelectedRange] = useState(null); // Track the selected range
-
-  const handleRangeSelect = (range) => {
-    setSelectedRange(range.label);
-    setDateRange(range.days, range.type || "days");
-  };
-
-  const handleDateChange = (dates) => {
-    const [start, end] = dates;
-    setStartDate(start);
-    setEndDate(end);
-  };
-
+  
   const predefinedRanges = [
     { label: "วันนี้", days: 0 },
     { label: "เมื่อวาน", days: 1 },
@@ -59,21 +47,10 @@ const Dashboard = () => {
     let pastDate = new Date();
 
     if (type === "month") {
-      if (days === 0) {
-        // "เดือนนี้" (current month)
-        pastDate = new Date(today.getFullYear(), today.getMonth(), 1); // First day of the current month
-        today.setMonth(today.getMonth() + 1, 0); // Last day of the current month
-      } else if (days === 1) {
-        // "เดือนที่แล้ว" (previous month)
-        pastDate = new Date(today.getFullYear(), today.getMonth() - 1, 1); // First day of the previous month
-        today.setMonth(today.getMonth(), 0); // Last day of the previous month
-      }
-    } else if (days === 1) {
-      // "เมื่อวาน" (yesterday)
-      pastDate.setDate(today.getDate() - 1);
-      today.setDate(today.getDate() - 1); // End date also set to yesterday
+      pastDate = new Date(today.getFullYear(), today.getMonth() - days, 1);
+      today.setDate(0); // วันสุดท้ายของเดือน
     } else {
-      pastDate.setDate(today.getDate() - days); // For ranges like 7 days or 30 days
+      pastDate.setDate(today.getDate() - days);
     }
 
     setStartDate(pastDate);
@@ -143,13 +120,10 @@ const Dashboard = () => {
                   {predefinedRanges.map((range) => (
                     <p
                       key={range.label}
-                      className={`cursor-pointer p-2 hover:bg-gray-100 w-[100px] font-thin text-sm text-gray-500 
-                          ${
-                            selectedRange === range.label
-                              ? "bg-gray-50 border-r-4 border-blue-500 text-blue-400"
-                              : ""
-                          }`}
-                      onClick={() => handleRangeSelect(range)} // Update the selected range on click
+                      className="cursor-pointer p-2 hover:bg-gray-100 w-[100px] font-thin text-sm text-gray-500"
+                      onClick={() =>
+                        setDateRange(range.days, range.type || "days")
+                      }
                     >
                       {range.label}
                     </p>
@@ -157,12 +131,12 @@ const Dashboard = () => {
                 </div>
                 <div className="p-2">
                   <div className="flex gap-3">
-                    <DatePicker
+                  <DatePicker
                       selected={startDate}
-                      onChange={handleDateChange}
+                      onChange={(date) => setStartDate(date)}
+                      selectsStart
                       startDate={startDate}
                       endDate={endDate}
-                      selectsRange
                       locale="th"
                       dateFormat="dd/MM/yyyy"
                       className="border p-2 rounded w-full flex"
@@ -269,26 +243,7 @@ const Dashboard = () => {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="month" tick={{ fontSize: "12px" }} />
-                <Tooltip
-                  itemStyle={{
-                    color: "white", // เปลี่ยนสีข้อความใน tooltip
-                    fontSize: '14px',
-                  }}
-                  contentStyle={{
-                    backgroundColor: "black", // เปลี่ยนพื้นหลังเป็นสีดำ
-                    borderRadius: "8px",
-                    padding: "10px",
-                  }}
-                  labelStyle={{
-                    color: '#E5E5EF', // เปลี่ยนสีของ label (วันที่) เป็นสีเทา
-                    fontSize: '14px',
-                    textAlign: 'center', // จัดตำแหน่งข้อความให้ตรงกลาง
-                    display: 'flex',
-                    justifyContent: 'center', // ทำให้เนื้อหาอยู่กลาง
-                    alignItems: 'center',
-                  }}
-            
-                />
+                <Tooltip />
                 <Area
                   type="monotone"
                   dataKey="revenue"
@@ -324,12 +279,8 @@ const Dashboard = () => {
                     fontWeight: "500",
                   }}
                   formatter={(value) => {
-                    if (value === "entries") {
-                      return <span style={{ color: "#615E83" }}>รถเข้า</span>;
-                    }
-                    if (value === "exits") {
-                      return <span style={{ color: "#615E83" }}>รถออก</span>;
-                    }
+                    if (value === "entries") return "รถเข้า";
+                    if (value === "exits") return "รถออก";
                     return value;
                   }}
                 />
