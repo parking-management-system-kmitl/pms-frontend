@@ -1,10 +1,8 @@
-import { ArrowDownIcon, ArrowDownTrayIcon, ChevronDownIcon, ShareIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import React, { useState, useEffect } from "react";
 import ThaiQR from "../../assets/ThaiQR.png"
 import PromptPay from "../../assets/PromptPay.png"
-// import download from "../../assets/download.png"
 import { useNavigate } from "react-router-dom";
-
 
 function PayingPage() {
     const navigate = useNavigate();
@@ -41,7 +39,7 @@ function PayingPage() {
                     <p className="text-[#007AFF] text-2xl">{formatTime()}</p>
                 </div>
 
-                <div className=" pl-6 pr-6">
+                <div className="pl-6 pr-6">
                     <div className=" border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-auto items-center ">
                         <div className=" flex justify-center items-center h-[57px] w-full rounded-tr-[20px] rounded-tl-[20px] bg-[#113E68]">
                             <img src={ThaiQR} alt="thai_qr" className="w-[100px] " />
@@ -58,7 +56,6 @@ function PayingPage() {
 
                     <div className=" w-full flex justify-center items-center mt-6">
                         <div className=" flex flex-col justify-center items-center w-auto h-auto p-2">
-                    {/* <img src={download} alt="download" className="w-8 h-8" /> */}
                             <button className=" rounded-2xl border-[0.5px] p-2 border-gray-300 w-8 h-8 flex justify-center items-center">
                                 <ArrowDownTrayIcon className=" w-auto h-auto" />
                             </button>

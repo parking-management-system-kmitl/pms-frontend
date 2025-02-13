@@ -1,5 +1,9 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import { Layout } from "./layouts";
 import DetailPage from "./pages/detailPage/DetailPage";
 import LandingPage from "./pages/landingPage/LandingPage";
@@ -7,10 +11,15 @@ import PayingPage from "./pages/payingPage/PayingPage";
 import ReceiptPage from "./pages/receiptPage/ReceiptPage";
 import { SpinnerLoading } from "./components";
 import ManagePage from "./pages/managePage/ManagePage";
+import RegisVipPage from "./pages/regisVipPage/RegisVipPage";
+import DashboardPage from "./pages/dashboardPage/DashboardPage";
+import RegisPaymentPage from "./pages/regisPaymentPage/RegisPaymentPage";
+import RegisVipReceiptPage from "./pages/regisVipReceiptPage/RegisVipReceiptPage";
+import VipErrorPage from "./pages/vipErrorPage/VipErrorPage";
 
 const LoginPage = lazy(() => import("./pages/loginPage/LoginPage"));
 const ListVipPage = lazy(() => import("./pages/listVipPage/ListVipPage"));
-const DemoReduxPage = lazy(()=>import("./pages/demoReduxPage/DemoReduxPage"))
+const DemoReduxPage = lazy(() => import("./pages/demoReduxPage/DemoReduxPage"));
 
 const router = createBrowserRouter([
   {
@@ -22,7 +31,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/landing",
+    path: "/landing/:id?",
     element: (
       <Suspense fallback={<SpinnerLoading />}>
         <LandingPage />
@@ -38,7 +47,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/payment",
+    path: "/payment/:id?",
     element: (
       <Suspense fallback={<SpinnerLoading />}>
         <PayingPage />
@@ -46,8 +55,44 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: "/regisvip",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <RegisVipPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/regisvippaying",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <RegisPaymentPage />
+      </Suspense>
+    )
+  },
+  {
+    path: "/regisvipreceipt",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <RegisVipReceiptPage />
+      </Suspense>
+    )
+  },
+  {
+    path: "/404vip",
+    element: (
+      <Suspense fallback={<SpinnerLoading />}>
+        <VipErrorPage />
+      </Suspense>
+    )
+  },
+  {
     element: <Layout />,
     children: [
+      {
+        path: "/dashboard",
+        element: <DashboardPage />,
+      },
       {
         path: "/listvip",
         element: (
@@ -84,8 +129,8 @@ const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/landing" replace />
-  }
+    element: <Navigate to="/landing" replace />,
+  },
 ]);
 
 const AppRouter = () => {
@@ -93,17 +138,3 @@ const AppRouter = () => {
 };
 
 export default AppRouter;
-
-{
-  /* <Router>
-<Routes>
-  <Route path="/" element={<LoginPage />} />
-  <Route path="/landing" element={<LandingPage />} />
-  <Route path="/payment" element={<PaymentPage />} />
-  <Route path="/paying" element={<PayingPage  />} />
-  <Route path="/receipt" element={<ReceiptPage />} />
-  <Route path="/detail" element={<DetailPage />} />
-  <Route path="/listvip" element={<ListVipPage />} />
-</Routes>
-</Router> */
-}
