@@ -138,7 +138,7 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
 
             <div className="mt-6 flex justify-end">
               <button
-                className="bg-primary px-4 py-2 text-white rounded-lg"
+                className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
                 onClick={handleClose}
               >
                 ปิด

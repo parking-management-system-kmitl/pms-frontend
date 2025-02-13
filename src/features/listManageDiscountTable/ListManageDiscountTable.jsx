@@ -296,7 +296,7 @@ function ListManageDiscountTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-bold mb-4">รายละเอียดส่วนลด</h2>
+            <h2 className="text-3xl font-medium mb-4">รายละเอียดส่วนลด</h2>
             <div className="mb-4">
               <label htmlFor="title" className="block text-sm font-medium mb-1">
                 รายการ
@@ -436,7 +436,7 @@ function ListManageDiscountTable() {
                 </span>
               </div>
             </div>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-6">
               <button
                 onClick={() => setShowEditPopup(false)}
                 className="bg-gray-300 px-4 py-2 rounded-lg w-[150px] h-[49px]"
@@ -463,7 +463,7 @@ function ListManageDiscountTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-bold mb-4">รายละเอียดส่วนลด</h2>
+            <h2 className="text-3xl font-medium mb-4">รายละเอียดส่วนลด</h2>
             <div className="mb-4">
               <label htmlFor="title" className="block text-sm font-medium mb-1">
                 รายการ
@@ -524,7 +524,7 @@ function ListManageDiscountTable() {
                   htmlFor="hours_granted"
                   className="block text-sm font-medium mb-1"
                 >
-                  เวลาจอดฟรี (ชั่วโมง)
+                  ส่วนลดค่าจอด (ชม.)
                 </label>
                 <input
                   type="number"
@@ -540,7 +540,7 @@ function ListManageDiscountTable() {
                 />
               </div>
             </div>
-            <div className="mb-5">
+            <div className="mb-6">
               <label
                 htmlFor="min_purchase"
                 className="block text-sm font-medium mb-1"
@@ -575,7 +575,7 @@ function ListManageDiscountTable() {
                 />
               </div>
             </div>
-            <div className="mb-4 gap-3 flex justify-end ">
+            <div className="mb-4 gap-6 flex justify-end ">
               <button
                 onClick={() => setShowAddPopup(false)}
                 className="bg-gray-300 px-4 py-2 rounded-lg w-[150px] h-[49px]"

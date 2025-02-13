@@ -272,7 +272,7 @@ const Dashboard = () => {
                 <Tooltip
                   itemStyle={{
                     color: "white", // เปลี่ยนสีข้อความใน tooltip
-                    fontSize: '14px',
+                    fontSize: "14px",
                   }}
                   contentStyle={{
                     backgroundColor: "black", // เปลี่ยนพื้นหลังเป็นสีดำ
@@ -280,14 +280,13 @@ const Dashboard = () => {
                     padding: "10px",
                   }}
                   labelStyle={{
-                    color: '#E5E5EF', // เปลี่ยนสีของ label (วันที่) เป็นสีเทา
-                    fontSize: '14px',
-                    textAlign: 'center', // จัดตำแหน่งข้อความให้ตรงกลาง
-                    display: 'flex',
-                    justifyContent: 'center', // ทำให้เนื้อหาอยู่กลาง
-                    alignItems: 'center',
+                    color: "#E5E5EF", // เปลี่ยนสีของ label (วันที่) เป็นสีเทา
+                    fontSize: "14px",
+                    textAlign: "center", // จัดตำแหน่งข้อความให้ตรงกลาง
+                    display: "flex",
+                    justifyContent: "center", // ทำให้เนื้อหาอยู่กลาง
+                    alignItems: "center",
                   }}
-            
                 />
                 <Area
                   type="monotone"
@@ -312,7 +311,25 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="5 5" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: "12px" }} />
                 <YAxis tick={{ fontSize: "12px" }} />
-                <Tooltip />
+                <Tooltip
+                  itemStyle={{
+                    color: "white", // เปลี่ยนสีข้อความใน tooltip
+                    fontSize: "14px",
+                  }}
+                  contentStyle={{
+                    backgroundColor: "black", // เปลี่ยนพื้นหลังเป็นสีดำ
+                    borderRadius: "8px",
+                    padding: "10px",
+                  }}
+                  labelStyle={{
+                    color: "#E5E5EF", // เปลี่ยนสีของ label (วันที่) เป็นสีเทา
+                    fontSize: "14px",
+                    textAlign: "center", // จัดตำแหน่งข้อความให้ตรงกลาง
+                    display: "flex",
+                    justifyContent: "center", // ทำให้เนื้อหาอยู่กลาง
+                    alignItems: "center",
+                  }}
+                />
                 <Legend
                   iconType="circle"
                   verticalAlign="top"
