@@ -16,10 +16,13 @@ function DetailPage() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedDiscount, setSelectedDiscount] = useState("");
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]); // เพิ่มสถานะสำหรับเก็บข้อมูลที่กรองแล้ว
+  const [filteredData, setFilteredData] = useState([]);
   const [totalRows, setTotalRows] = useState(0);
   const [pageCount, setPageCount] = useState(1);
-  const [searchQuery, setSearchQuery] = useState(""); // เพิ่มสถานะสำหรับการค้นหา
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selected, setSelected] = useState("ทั้งหมด");
+
+  const buttons = ["ทั้งหมด", "รถเข้า", "รถออก"];
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -38,8 +41,8 @@ function DetailPage() {
 
       const result = await response.json();
       if (result.status === "success") {
-        setData(result.data.items); // เก็บข้อมูลทั้งหมด
-        setFilteredData(result.data.items); // ตั้งค่าข้อมูลที่กรองแล้วให้เหมือนกันในตอนแรก
+        setData(result.data.items);
+        setFilteredData(result.data.items);
         setTotalRows(result.data.meta.total);
         setPageCount(result.data.meta.totalPages);
       } else {
@@ -50,24 +53,46 @@ function DetailPage() {
     }
   };
 
-  useEffect(() => {
-    fetchData(page, rowsPerPage);
-  });
+  const fetchEntryRecords = async (currentPage, limit) => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/parking/entry-records?page=${currentPage}&limit=${limit}`
+      );
+      const result = await response.json();
+      if (result.success) {
+        setData(result.data);
+        setFilteredData(result.data);
+        setTotalRows(result.total);
+        setPageCount(result.totalPages);
+      } else {
+        console.error("Failed to fetch entry records:", result);
+      }
+    } catch (error) {
+      console.error("Error fetching entry records:", error);
+    }
+  };
 
   useEffect(() => {
-    // กรองข้อมูลเมื่อ searchQuery เปลี่ยน
+    if (selected === "รถเข้า") {
+      fetchEntryRecords(page, rowsPerPage);
+    } else {
+      fetchData(page, rowsPerPage);
+    }
+  }, [page, rowsPerPage, selected]);
+
+  useEffect(() => {
     if (searchQuery === "") {
       setFilteredData(data);
     } else {
       const filtered = data.filter((row) =>
-        row.licenseplate.toLowerCase().includes(searchQuery.toLowerCase())
+        row.car.license_plate.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredData(filtered);
     }
-  }, [searchQuery, data]); // ทำเมื่อ searchQuery หรือ data เปลี่ยนแปลง
+  }, [searchQuery, data]);
 
   const handleRowClick = (index) => {
-    setSelectedRow(filteredData[index]); // ใช้ filteredData[index] แทน
+    setSelectedRow(filteredData[index]);
     setModalVisible(true);
   };
 
@@ -88,7 +113,7 @@ function DetailPage() {
   };
 
   const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value); // อัพเดต searchQuery เมื่อมีการพิมพ์
+    setSearchQuery(event.target.value);
   };
 
   return (
@@ -99,9 +124,7 @@ function DetailPage() {
             <h1 className="font-inter font-bold text-3xl">
               รายการเข้า-ออกที่จอดรถ
             </h1>
-            <div
-              className="flex items-center px-4 gap-4 bg-blue-100 text-gray-600 rounded-full w-1/3 h-12 ml-auto"
-            >
+            <div className="flex items-center px-4 gap-4 bg-blue-100 text-gray-600 rounded-full w-1/3 h-12 ml-auto">
               <svg
                 id="lens"
                 className="w-6 h-6"
@@ -124,8 +147,8 @@ function DetailPage() {
                 name="carname"
                 placeholder="ค้นหาป้ายทะเบียน"
                 className="bg-transparent outline-none w-full text-gray-600 placeholder-gray-600"
-                value={searchQuery} // ตั้งค่า value จาก searchQuery
-                onChange={handleSearchChange} // เพิ่ม event handler เมื่อมีการพิมพ์
+                value={searchQuery}
+                onChange={handleSearchChange}
               />
             </div>
           </div>
@@ -148,6 +171,19 @@ function DetailPage() {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="flex justify-end gap-5">
+            {buttons.map((btn) => (
+              <button
+                key={btn}
+                onClick={() => setSelected(btn)}
+                className={`px-4 py-2 border border-[#007AFF]/15 text-[#007AFF] rounded-[8px] w-[87px] h-[40px] font-sm ${
+                  selected === btn ? "bg-[#007AFF]/15" : "bg-white"
+                }`}
+              >
+                {btn}
+              </button>
+            ))}
           </div>
         </div>
         <div className="mt-6 overflow-auto">
@@ -192,12 +228,16 @@ function DetailPage() {
                       className="border-b hover:bg-blue-50 cursor-pointer"
                     >
                       <td className="px-4 py-3">{serialNumber}</td>
-                      <td className="px-4 py-3">{row.licenseplate}</td>
-                      <td className="px-4 py-3">{row.date}</td>
-                      <td className="px-4 py-3">{row.entrytime}</td>
-                      <td className="px-4 py-3">{row.exittime}</td>
-                      <td className="px-4 py-3">{row.duration}</td>
-                      <td className="px-4 py-3">{row.fee} บาท</td>
+                      <td className="px-4 py-3">{row.car.license_plate}</td>
+                      <td className="px-4 py-3">
+                        {new Date(row.entry_time).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        {new Date(row.entry_time).toLocaleTimeString()}
+                      </td>
+                      <td className="px-4 py-3">-</td>
+                      <td className="px-4 py-3">-</td>
+                      <td className="px-4 py-3">{row.parkingFee} บาท</td>
                     </tr>
                   );
                 })

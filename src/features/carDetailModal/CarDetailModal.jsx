@@ -1,15 +1,32 @@
 import React from "react";
 
-function CarDetailModal({ isVisible, onClose, selectedRow, selectedDiscount, setSelectedDiscount }) {
+function CarDetailModal({
+  isVisible,
+  onClose,
+  selectedRow,
+  selectedDiscount,
+  setSelectedDiscount,
+}) {
   if (!selectedRow) return null;
-  const {
-    licenseplate,
-    entrytime,
-    exittime,
-    duration,
-    fee,
-    isVIP,
-  } = selectedRow;
+
+  // ตรวจสอบว่า selectedRow มาจาก API ไหน
+  const isEntryRecord = selectedRow.car !== undefined;
+
+  // ดึงข้อมูลจาก selectedRow
+  const licenseplate = isEntryRecord
+    ? selectedRow.car.license_plate
+    : selectedRow.licenseplate;
+  const entrytime = isEntryRecord
+    ? new Date(selectedRow.entry_time).toLocaleTimeString()
+    : selectedRow.entrytime;
+  const exittime = isEntryRecord ? "-" : selectedRow.exittime;
+  const duration = isEntryRecord ? "-" : selectedRow.duration;
+  const fee = isEntryRecord ? selectedRow.parkingFee : selectedRow.fee;
+  const isVIP = isEntryRecord
+    ? selectedRow.car.vip_expiry_date !== null
+    : selectedRow.isVIP;
+  const parkedHours = isEntryRecord ? selectedRow.parkedHours : 0; // ชั่วโมงที่จอด
+  const entryImage = isEntryRecord ? selectedRow.entry_car_image_path : null; // รูปภาพรถ (ถ้ามี)
 
   return (
     <>
@@ -26,11 +43,22 @@ function CarDetailModal({ isVisible, onClose, selectedRow, selectedDiscount, set
               {/* Left Section */}
               <div className="w-1/2 mr-5 ml-4">
                 <h1 className="font-inter text-blue-500 text-lg font-semibold">
-                  วันศุกร์ ที่ 6 สิงหาคม 2024 เวลา 14:32:04
+                  {new Date(selectedRow.entry_time).toLocaleDateString(
+                    "th-TH",
+                    {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    }
+                  )}
                 </h1>
                 <img
                   className="mt-3"
-                  src="/images/car_pic_example.png"
+                  src={entryImage || "/images/car_pic_example.png"} // ใช้รูปจาก API หรือรูป default
                   alt="car-pic"
                 />
                 <p className="font-semibold flex justify-between items-center mt-6">
@@ -100,13 +128,19 @@ function CarDetailModal({ isVisible, onClose, selectedRow, selectedDiscount, set
                   เวลาออก: <span>{exittime || "-"}</span>
                 </p>
                 <p className="font-inter text-sm mb-1 mt-3 flex justify-between text-gray-500">
-                  ระยะเวลาการจอด: <span>{duration}</span>
+                  ระยะเวลาการจอด: <span>{parkedHours} ชั่วโมง</span>
                 </p>
                 <p className="font-inter text-sm mb-1 mt-3 flex justify-between text-gray-500">
-                  สิทธิ์จอดฟรี: <span>1 ชั่วโมง 0 นาที(Mock)</span>
+                  สิทธิ์จอดฟรี: <span>{isVIP ? "1 ชั่วโมง 0 นาที" : "-"}</span>
                 </p>
                 <p className="font-inter text-sm mb-3 mt-3 flex justify-between text-gray-500">
-                  ชำระแล้ว: <span>0 บาท(Mock)</span>
+                  ชำระแล้ว:{" "}
+                  <span>
+                    {selectedRow.payment.paid_at
+                      ? selectedRow.payment.amount
+                      : "0"}{" "}
+                    บาท
+                  </span>
                 </p>
                 <button className="bg-gray-100 w-full h-10 rounded-lg text-gray-400">
                   ยืนยัน

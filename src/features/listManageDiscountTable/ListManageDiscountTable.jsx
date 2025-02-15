@@ -13,40 +13,58 @@ function ListManageDiscountTable() {
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false); // New state for delete confirmation
   const [deleteData, setDeleteData] = useState(null); // Store discount id to delete
+
   const [editData, setEditData] = useState({
     id: "",
     title: "",
     min_purchase: "",
     max_purchase: "",
-    hours_granted: "",
-    customer_type: 1,
+    free_hours: "",
+    customer_type: "REGULAR",
     is_active: true,
   });
+
+  const displayValue =
+    editData.free_hours === 0 ? "" : editData.free_hours.toString();
+
+  const handleEditClick = (discount) => {
+    setEditData({
+      id: discount.discount_id,
+      title: discount.title,
+      min_purchase: discount.min_purchase,
+      max_purchase: discount.max_purchase,
+      free_hours: discount.free_hours,
+      customer_type: discount.customer_type,
+      is_active: discount.is_active,
+    });
+    setShowEditPopup(true);
+  };
+
   const [newDiscount, setNewDiscount] = useState({
     title: "",
+    customer_type: "GENERAL", // Changed from number to string
     min_purchase: "",
     max_purchase: "",
-    hours_granted: "",
-    customer_type: 2,
+    free_hours: "", // Changed from hours_granted
+    is_active: true,
   });
 
   useEffect(() => {
     const fetchDiscounts = async () => {
-      const apiUrl = `${process.env.REACT_APP_API_URL}/parking-discounts/list`;
+      const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/discounts`;
       try {
         setIsLoading(true);
         const response = await fetch(apiUrl, {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({}),
         });
         const data = await response.json();
-        if (data.status === "success") {
+        if (data.status === 200 && Array.isArray(data.data)) {
           setDiscounts(data.data);
         } else {
-          setError(data.message || "Failed to fetch discounts.");
+          setError("Failed to fetch discounts.");
         }
       } catch (err) {
         setError("เกิดข้อผิดพลาดขณะพยายาม fetch ข้อมูล.");
@@ -67,58 +85,56 @@ function ListManageDiscountTable() {
   const pageCount = Math.ceil(discounts.length / 10);
 
   const handleToggleStatus = async (discountId) => {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/parking-discounts/toggle-status`;
+    const discount = discounts.find((d) => d.discount_id === discountId);
+    if (!discount) return;
+
+    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/discounts/${discountId}`;
     try {
       const response = await fetch(apiUrl, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: discountId }),
+        body: JSON.stringify({
+          ...discount,
+          is_active: !discount.is_active,
+        }),
       });
       const data = await response.json();
-      if (data.status === "success") {
-        const updatedDiscounts = discounts.map((discount) =>
-          discount.id === discountId
-            ? { ...discount, is_active: data.data.is_active }
-            : discount
+      if (data.status === 200) {
+        const updatedDiscounts = discounts.map((d) =>
+          d.discount_id === discountId ? data.data : d
         );
         setDiscounts(updatedDiscounts);
       } else {
-        console.error(data.message || "Failed to toggle discount status");
+        console.error("Failed to toggle discount status");
       }
     } catch (error) {
       console.error("Error toggling discount status:", error);
     }
   };
 
-  const handleEditClick = (discount) => {
-    setEditData({
-      id: discount.id,
-      title: discount.title,
-      min_purchase: discount.min_purchase,
-      max_purchase: discount.max_purchase,
-      hours_granted: discount.hours_granted,
-      customer_type: discount.customer_type,
-      is_active: discount.is_active,
-    });
-    setShowEditPopup(true);
-  };
-
   const handleSubmitEdit = async () => {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/parking-discounts/update`;
+    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/discounts/${editData.id}`;
     try {
       const response = await fetch(apiUrl, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(editData),
+        body: JSON.stringify({
+          title: editData.title,
+          customer_type: editData.customer_type,
+          min_purchase: editData.min_purchase,
+          max_purchase: editData.max_purchase,
+          free_hours: Number(editData.free_hours),
+          is_active: editData.is_active,
+        }),
       });
       const data = await response.json();
-      if (data.status === "success") {
+      if (data.status === 200) {
         const updatedDiscounts = discounts.map((discount) =>
-          discount.id === editData.id ? { ...discount, ...editData } : discount
+          discount.discount_id === editData.id ? data.data : discount
         );
         setDiscounts(updatedDiscounts);
         setShowEditPopup(false);
@@ -131,19 +147,44 @@ function ListManageDiscountTable() {
   };
 
   const handleAddDiscount = async () => {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/parking-discounts/create`;
+    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/discounts`;
+
+    // ข้อมูลที่จะส่งไป
+    const requestBody = {
+      title: newDiscount.title,
+      customer_type: newDiscount.customer_type,
+      min_purchase: Number(newDiscount.min_purchase),
+      max_purchase: Number(newDiscount.max_purchase),
+      free_hours: Number(newDiscount.free_hours),
+      is_active: true,
+    };
+
+    // แสดงข้อมูลที่จะส่งไปใน console
+    console.log("Data to be sent:", requestBody);
+
     try {
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newDiscount),
+        body: JSON.stringify(requestBody), // ส่งข้อมูลไปยัง API
       });
+
       const data = await response.json();
-      if (data.status === "success") {
+      console.log("Response from server:", data); // แสดงข้อมูลที่ได้รับกลับมาจากเซิร์ฟเวอร์
+
+      if (data.status === 201) {
         setDiscounts([...discounts, data.data]);
         setShowAddPopup(false);
+        setNewDiscount({
+          title: "",
+          customer_type: "REGULAR",
+          min_purchase: "",
+          max_purchase: "",
+          free_hours: "",
+          is_active: true,
+        });
       } else {
         console.error("Failed to add discount:", data.message);
       }
@@ -158,23 +199,22 @@ function ListManageDiscountTable() {
   };
 
   const handleConfirmDelete = async () => {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/parking-discounts/delete`;
+    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/discounts/${deleteData}`;
     try {
       const response = await fetch(apiUrl, {
-        method: "POST",
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: deleteData }),
       });
-      const data = await response.json();
-      if (data.status === "success") {
+
+      if (response.ok) {
         setDiscounts(
-          discounts.filter((discount) => discount.id !== deleteData)
+          discounts.filter((discount) => discount.discount_id !== deleteData)
         );
         setShowDeletePopup(false);
       } else {
-        console.error("Failed to delete discount:", data.message);
+        console.error("Failed to delete discount");
       }
     } catch (error) {
       console.error("Error deleting discount:", error);
@@ -225,16 +265,21 @@ function ListManageDiscountTable() {
             <tbody className="overflow-auto">
               {discounts.slice((page - 1) * 10, page * 10).map((discount) => (
                 <tr
-                  key={discount.id}
+                  key={discount.discount_id}
                   className="border-b text-black text-sm font-thin"
                 >
                   <td className="px-4 py-3">{discount.title}</td>
                   <td className="px-4 py-3">
-                    {discount.min_purchase} - {discount.max_purchase}
+                    {discount.min_purchase.toLocaleString()} -{" "}
+                    {discount.max_purchase.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3">{discount.hours_granted}</td>
+                  <td className="px-4 py-3">{discount.free_hours}</td>
                   <td className="px-4 py-3">
-                    {discount.customer_type === 1 ? "VIP" : "ทั่วไป"}
+                    {discount.customer_type === "VIP"
+                      ? "VIP"
+                      : discount.customer_type === "GENERAL"
+                      ? "ทั่วไป"
+                      : "ทั้งหมด"}
                   </td>
                   <td className="px-3 py-3">
                     <label className="inline-flex items-center cursor-pointer">
@@ -245,7 +290,7 @@ function ListManageDiscountTable() {
                         type="checkbox"
                         checked={discount.is_active}
                         onChange={() =>
-                          handleToggleStatus(discount.id, discount.is_active)
+                          handleToggleStatus(discount.discount_id)
                         }
                         className="toggle-checkbox"
                       />
@@ -256,7 +301,9 @@ function ListManageDiscountTable() {
                     <button onClick={() => handleEditClick(discount)}>
                       <PencilSquareIcon className="w-5 h-5 text-primary" />
                     </button>
-                    <button onClick={() => handleDeleteClick(discount.id)}>
+                    <button
+                      onClick={() => handleDeleteClick(discount.discount_id)}
+                    >
                       <TrashIcon className="w-5 h-5 text-red-500" />
                     </button>
                   </td>
@@ -326,13 +373,14 @@ function ListManageDiscountTable() {
                     onChange={(e) =>
                       setEditData({
                         ...editData,
-                        customer_type: parseInt(e.target.value),
+                        customer_type: e.target.value,
                       })
                     }
                     className="border border-gray-300 rounded p-2 w-full h-[48px] appearance-none pr-8"
                   >
-                    <option value={1}>VIP</option>
-                    <option value={2}>Regular</option>
+                    <option value="VIP">VIP</option>
+                    <option value="GENERAL">ทั่วไป</option>
+                    <option value="ALL">ทั้งหมด</option>
                   </select>
                   <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
                     <svg
@@ -343,9 +391,9 @@ function ListManageDiscountTable() {
                       className="w-4 h-4"
                     >
                       <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
                         d="M19 9l-7 7-7-7"
                       />
                     </svg>
@@ -354,22 +402,25 @@ function ListManageDiscountTable() {
               </div>
               <div className="mb-4 w-full">
                 <label
-                  htmlFor="hours_granted"
+                  htmlFor="free_hours"
                   className="block text-sm font-medium mb-1"
                 >
                   ส่วนลดค่าจอด (ชม.)
                 </label>
                 <input
                   type="number"
-                  id="hours_granted"
-                  value={editData.hours_granted}
-                  onChange={(e) =>
-                    setEditData({ ...editData, hours_granted: e.target.value })
-                  }
+                  id="free_hours"
+                  value={displayValue}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value === "" ? 0 : Number(e.target.value);
+                    setEditData({ ...editData, free_hours: value });
+                  }}
                   className="border border-gray-300 rounded p-2 w-full h-[48px]"
                 />
               </div>
             </div>
+            {/* Rest of the form remains the same */}
             <div className="mb-4">
               <label
                 htmlFor="min_purchase"
@@ -383,7 +434,10 @@ function ListManageDiscountTable() {
                   id="min_purchase"
                   value={editData.min_purchase}
                   onChange={(e) =>
-                    setEditData({ ...editData, min_purchase: e.target.value })
+                    setEditData({
+                      ...editData,
+                      min_purchase: Number(e.target.value),
+                    })
                   }
                   className="border border-gray-300 rounded p-2 w-full"
                 />
@@ -393,7 +447,10 @@ function ListManageDiscountTable() {
                   id="max_purchase"
                   value={editData.max_purchase}
                   onChange={(e) =>
-                    setEditData({ ...editData, max_purchase: e.target.value })
+                    setEditData({
+                      ...editData,
+                      max_purchase: Number(e.target.value),
+                    })
                   }
                   className="border border-gray-300 rounded p-2 w-full"
                 />
@@ -427,9 +484,9 @@ function ListManageDiscountTable() {
                     className="w-4 h-4"
                   >
                     <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
@@ -493,13 +550,14 @@ function ListManageDiscountTable() {
                     onChange={(e) =>
                       setNewDiscount({
                         ...newDiscount,
-                        customer_type: parseInt(e.target.value),
+                        customer_type: e.target.value,
                       })
                     }
                     className="border border-gray-300 rounded p-2 w-full h-[48px] appearance-none pr-8"
                   >
-                    <option value={1}>VIP</option>
-                    <option value={2}>ทั่วไป</option>
+                    <option value="VIP">VIP</option>
+                    <option value="GENERAL">ทั่วไป</option>
+                    <option value="ALL">ทั้งหมด</option>
                   </select>
                   <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
                     <svg
@@ -510,9 +568,9 @@ function ListManageDiscountTable() {
                       className="w-4 h-4"
                     >
                       <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
                         d="M19 9l-7 7-7-7"
                       />
                     </svg>
@@ -521,19 +579,19 @@ function ListManageDiscountTable() {
               </div>
               <div className="mb-4 w-full">
                 <label
-                  htmlFor="hours_granted"
+                  htmlFor="free_hours"
                   className="block text-sm font-medium mb-1"
                 >
                   ส่วนลดค่าจอด (ชม.)
                 </label>
                 <input
                   type="number"
-                  id="hours_granted"
-                  value={newDiscount.hours_granted}
+                  id="free_hours"
+                  value={newDiscount.free_hours}
                   onChange={(e) =>
                     setNewDiscount({
                       ...newDiscount,
-                      hours_granted: e.target.value,
+                      free_hours: Number(e.target.value),
                     })
                   }
                   className="border border-gray-300 rounded p-2 w-full h-[48px]"
@@ -555,7 +613,7 @@ function ListManageDiscountTable() {
                   onChange={(e) =>
                     setNewDiscount({
                       ...newDiscount,
-                      min_purchase: e.target.value,
+                      min_purchase: Number(e.target.value),
                     })
                   }
                   className="border border-gray-300 rounded p-2 w-full"
@@ -568,14 +626,14 @@ function ListManageDiscountTable() {
                   onChange={(e) =>
                     setNewDiscount({
                       ...newDiscount,
-                      max_purchase: e.target.value,
+                      max_purchase: Number(e.target.value),
                     })
                   }
                   className="border border-gray-300 rounded p-2 w-full"
                 />
               </div>
             </div>
-            <div className="mb-4 gap-6 flex justify-end ">
+            <div className="mb-4 gap-6 flex justify-end">
               <button
                 onClick={() => setShowAddPopup(false)}
                 className="bg-gray-300 px-4 py-2 rounded-lg w-[150px] h-[49px]"

@@ -6,8 +6,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./DashboardPage.css";
 import { Button } from "../../components/ui/Button";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -15,6 +13,7 @@ import {
   BarChart,
   Bar,
   Area,
+  AreaChart,
   CartesianGrid,
   Legend,
 } from "recharts";
@@ -32,7 +31,7 @@ const Dashboard = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [selectedRange, setSelectedRange] = useState(null); // Track the selected range
+  const [selectedRange, setSelectedRange] = useState(null);
 
   const handleRangeSelect = (range) => {
     setSelectedRange(range.label);
@@ -251,58 +250,45 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 h-[300px]">
           <Card className="p-4">
             <p className="pt-4 pb-[3rem] text-lg font-bold">ภาพรวมรายได้</p>
-            <ResponsiveContainer
-              width="100%"
-              height={250}
-              className="pl-6 pr-6"
-            >
-              <LineChart data={data.revenueData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3998FF" stopOpacity={1} />
-                    <stop offset="49%" stopColor="#66AFFF" stopOpacity={0.5} />
-                    <stop
-                      offset="100%"
-                      stopColor="#E5EAFC"
-                      stopOpacity={0.26}
-                    />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="month" tick={{ fontSize: "12px" }} />
-                <Tooltip
-                  itemStyle={{
-                    color: "white", // เปลี่ยนสีข้อความใน tooltip
-                    fontSize: "14px",
-                  }}
-                  contentStyle={{
-                    backgroundColor: "black", // เปลี่ยนพื้นหลังเป็นสีดำ
-                    borderRadius: "8px",
-                    padding: "10px",
-                  }}
-                  labelStyle={{
-                    color: "#E5E5EF", // เปลี่ยนสีของ label (วันที่) เป็นสีเทา
-                    fontSize: "14px",
-                    textAlign: "center", // จัดตำแหน่งข้อความให้ตรงกลาง
-                    display: "flex",
-                    justifyContent: "center", // ทำให้เนื้อหาอยู่กลาง
-                    alignItems: "center",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#8884d8"
-                  fill="url(#colorRevenue)"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#007AFF"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={250} className="pl-6 pr-6">
+  <AreaChart data={data.revenueData}>
+    <defs>
+      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#3998FF" stopOpacity={1} />
+        <stop offset="49%" stopColor="#66AFFF" stopOpacity={0.5} />
+        <stop offset="100%" stopColor="#E5EAFC" stopOpacity={0.26} />
+      </linearGradient>
+    </defs>
+    <XAxis dataKey="month" tick={{ fontSize: "12px" }} />
+    <Tooltip
+      itemStyle={{
+        color: "white",
+        fontSize: "14px",
+      }}
+      contentStyle={{
+        backgroundColor: "black",
+        borderRadius: "8px",
+        padding: "10px",
+      }}
+      labelStyle={{
+        color: "#E5E5EF",
+        fontSize: "14px",
+        textAlign: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    />
+    <Area
+      type="monotone"
+      dataKey="revenue"
+      stroke="#007AFF"
+      strokeWidth={2}
+      fill="url(#colorRevenue)"
+    />
+  </AreaChart>
+</ResponsiveContainer>
+
           </Card>
           <Card className="p-4">
             <p className="pt-4 text-lg font-bold mb-6">ภาพรวมรถเข้า-ออก</p>
