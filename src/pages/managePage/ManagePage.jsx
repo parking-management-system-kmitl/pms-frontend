@@ -1,5 +1,6 @@
 import { ListManageDiscountTable } from "../../features/listManageDiscountTable";
 import { ListManageFeeTable } from "../../features/listManageFeeTable";
+import VIPPromotionsTable from "../../features/vipManagementTable/VipManagementTable";
 import PageCotainer from "../PageCotainer";
 
 function ManagePage() {
@@ -8,6 +9,7 @@ function ManagePage() {
       <div className=" space-y-10">
       <ListManageFeeTable />
       <ListManageDiscountTable />
+      <VIPPromotionsTable />
       </div>
       
       

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 function CarDetailModal({
   isVisible,
@@ -6,10 +6,101 @@ function CarDetailModal({
   selectedRow,
   selectedDiscount,
   setSelectedDiscount,
+  carId,
 }) {
-  if (!isVisible || !selectedRow) return null;
+  const [discounts, setDiscounts] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      if (!carId) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${apiUrl}/discount/list`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            car_id: carId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch discounts");
+        }
+
+        const data = await response.json();
+        setDiscounts(data.applicable_discounts || []);
+      } catch (err) {
+        setError("Failed to load discounts");
+        console.error("Error fetching discounts:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isVisible) {
+      fetchDiscounts();
+    }
+  }, [isVisible, carId, apiUrl]);
+
+  const handleApplyDiscount = async () => {
+    if (!selectedDiscount || !carId || isApplyingDiscount) return;
+  
+    const selectedDiscountObj = discounts.find(
+      (discount) => discount.discount_id.toString() === selectedDiscount.toString()
+    );
+  
+    if (!selectedDiscountObj) {
+      setError("Invalid discount selection");
+      return;
+    }
+  
+    setIsApplyingDiscount(true);
+    setError(null);
+  
+    try {
+      console.log(carId)
+      console.log(selectedDiscountObj.discount_id)
+      const response = await fetch(`${apiUrl}/discount/apply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          car_id: carId,
+          discount_id: selectedDiscountObj.discount_id,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to apply discount");
+      }
+  
+      const data = await response.json();
+  
+      if (data.status === "success") {
+        onClose();
+      } else {
+        throw new Error("Discount application failed");
+      }
+    } catch (err) {
+      setError("Failed to apply discount");
+      console.error("Error applying discount:", err);
+    } finally {
+      setIsApplyingDiscount(false);
+    }
+  };
+
+  if (!isVisible || !selectedRow) return null;
 
   const getRowType = (row) => {
     if (row.type === "active") return "entry";
@@ -31,7 +122,6 @@ function CarDetailModal({
           parkedHours: selectedRow.parkedHours || 0,
           fee: selectedRow.parkingFee,
           isVIP: selectedRow.isVip,
-          // ใช้ entry_car_image_path จาก API response
           image: selectedRow.entry_car_image_path,
           payment: selectedRow.payments?.[0] ||
             selectedRow.payment || {
@@ -50,7 +140,6 @@ function CarDetailModal({
           parkedHours: selectedRow.parkedHours || 0,
           fee: selectedRow.parkingFee,
           isVIP: selectedRow.isVip,
-          // ใช้ entry_car_image_path จาก API response
           image: selectedRow.entry_car_image_path,
           payment: selectedRow.payments?.[0] || {
             amount: "0.00",
@@ -76,6 +165,30 @@ function CarDetailModal({
     const amount = parseFloat(payment.amount) || 0;
     const discount = parseFloat(payment.discount) || 0;
     return formatCurrency(amount - discount);
+  };
+
+  const renderDiscountOptions = () => {
+    if (isLoading) {
+      return <option disabled>กำลังโหลดรายการส่วนลด...</option>;
+    }
+
+    if (error) {
+      return <option disabled>ไม่สามารถโหลดรายการส่วนลด</option>;
+    }
+
+    return (
+      <>
+        <option value="" disabled>
+          กรุณาเลือกส่วนลดอื่นๆ
+        </option>
+        {discounts.map((discount) => (
+          <option key={discount.discount_id} value={discount.discount_id}>
+            {discount.title} - {discount.free_hours} ชั่วโมง
+            {discount.customer_type === "VIP" ? " (VIP)" : ""}
+          </option>
+        ))}
+      </>
+    );
   };
 
   return (
@@ -109,7 +222,8 @@ function CarDetailModal({
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.src = "/images/car_pic_example.png";
-                    e.target.className = "w-full h-full object-contain bg-gray-200";
+                    e.target.className =
+                      "w-full h-full object-contain bg-gray-200";
                   }}
                 />
               ) : (
@@ -138,7 +252,7 @@ function CarDetailModal({
             </p>
           </div>
 
-          {/* Right Section - ไม่มีการเปลี่ยนแปลง */}
+          {/* Right Section */}
           <div className="w-1/2 ml-5 mr-4">
             <p className="font-bold mb-1 text-sm text-gray-600">
               ค่าบริการ (บาท)
@@ -153,15 +267,10 @@ function CarDetailModal({
               <select
                 value={selectedDiscount}
                 onChange={(e) => setSelectedDiscount(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-md bg-gray-100 text-sm appearance-none focus:outline-none"
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded-md bg-gray-100 text-sm appearance-none focus:outline-none disabled:bg-gray-200 disabled:text-gray-500"
                 disabled={data.status === "ออกแล้ว"}
               >
-                <option value="" disabled>
-                  กรุณาเลือกส่วนลดอื่นๆ
-                </option>
-                <option value="discount1">ส่วนลด 10%</option>
-                <option value="discount2">ส่วนลด 20%</option>
-                <option value="discount3">ส่วนลด 30%</option>
+                {renderDiscountOptions()}
               </select>
               <span className="absolute top-1/2 right-3 transform -translate-y-1/2 pointer-events-none">
                 <svg
@@ -193,9 +302,6 @@ function CarDetailModal({
               ระยะเวลาการจอด: <span>{data.parkedHours} ชั่วโมง</span>
             </p>
             <p className="font-inter text-sm mb-1 mt-3 flex justify-between text-gray-500">
-              สิทธิ์จอดฟรี: <span>{data.isVIP ? "1 ชั่วโมง 0 นาที" : "-"}</span>
-            </p>
-            <p className="font-inter text-sm mb-1 mt-3 flex justify-between text-gray-500">
               ส่วนลด:{" "}
               <span>{formatCurrency(data.payment.discount || 0)} บาท</span>
             </p>
@@ -204,14 +310,29 @@ function CarDetailModal({
             </p>
             <button
               className={`w-full h-10 rounded-lg ${
-                data.status === "ออกแล้ว"
+                data.status === "ออกแล้ว" ||
+                !selectedDiscount ||
+                isApplyingDiscount
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-blue-500 text-white hover:bg-blue-600"
               }`}
-              disabled={data.status === "ออกแล้ว"}
+              disabled={
+                data.status === "ออกแล้ว" ||
+                !selectedDiscount ||
+                isApplyingDiscount
+              }
+              onClick={handleApplyDiscount}
             >
-              {data.status === "ออกแล้ว" ? "ชำระเงินแล้ว" : "ยืนยัน"}
+              {isApplyingDiscount
+                ? "กำลังดำเนินการ..."
+                : data.status === "ออกแล้ว"
+                ? "ชำระเงินแล้ว"
+                : "ยืนยันการใช้ส่วนลด"}
             </button>
+
+            {error && (
+              <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+            )}
           </div>
         </div>
       </div>

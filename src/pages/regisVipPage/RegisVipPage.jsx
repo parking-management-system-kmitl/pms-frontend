@@ -49,16 +49,23 @@ export default function RegisVipPage() {
       });
 
       if (registerResponse.data.status) {
-        const linkCarResponse = await axios.post(`${apiUrl}/member/link-car`, {
-          phone: phone,
-          licenseplate: licensePlate,
-          vip_days: "5",
-        });
+        const prepareRegResponse = await axios.post(
+          `${apiUrl}/member/preparereg`,
+          {
+            phone: phone,
+            licenseplate: licensePlate,
+          }
+        );
 
-        if (linkCarResponse.data.message === "Car linked successfully") {
-          navigate("/regisvippaying");
+        if (prepareRegResponse.data.status) {
+          navigate("/regisvippaying", {
+            state: {
+              promotionData: prepareRegResponse.data.data.promotion,
+              carOwner: prepareRegResponse.data.data.car_owner,
+            },
+          });
         } else {
-          setError("ผูกทะเบียนรถไม่สำเร็จ");
+          setError("เตรียมข้อมูลการลงทะเบียนไม่สำเร็จ");
         }
       } else {
         setError(registerResponse.data.message);
@@ -70,18 +77,23 @@ export default function RegisVipPage() {
 
   const addCarToVip = async () => {
     try {
-      const response = await axios.post(`${apiUrl}/member/link-car`, {
+      const response = await axios.post(`${apiUrl}/member/preparereg`, {
         phone: phone,
         licenseplate: licensePlate,
-        vip_days: "5",
       });
 
-      if (response.data.message === "Car linked successfully") {
-        navigate("/regisvippaying");
+      if (response.data.status) {
+        navigate("/regisvippaying", {
+          state: {
+            promotionData: response.data.data.promotion,
+            carOwner: response.data.data.car_owner,
+          },
+        });
       } else {
-        setError("ผูกทะเบียนรถไม่สำเร็จ");
+        setError("เตรียมข้อมูลการลงทะเบียนไม่สำเร็จ");
       }
     } catch (error) {
+      setError("การเพิ่มรถไม่สำเร็จ");
     }
   };
 

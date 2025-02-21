@@ -1,18 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { XCircleIcon } from "@heroicons/react/24/outline";
-import vip from "../../assets/VIP.png"; // หรือเปลี่ยนเป็นรูปที่ต้องการ
+import vip from "../../assets/VIP.png";
 
 const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
   const [statusMessage, setStatusMessage] = useState(null);
-  const [statusType, setStatusType] = useState(""); // 'success' or 'error'
+  const [statusType, setStatusType] = useState("");
 
   if (!isOpen) return null;
 
-  const apiUrl = `${process.env.REACT_APP_API_URL}/vip/update`;
+  const apiUrl = `${process.env.REACT_APP_API_URL}/vip/${formData.car_id}`;
 
   const handleSubmit = async () => {
-    // ตรวจสอบข้อมูลใน formData ก่อนส่งคำขอ
     if (!formData.fname || !formData.lname || !formData.tel) {
       setStatusMessage("กรุณากรอกข้อมูลให้ครบถ้วน");
       setStatusType("error");
@@ -20,19 +19,20 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
     }
 
     const submitData = {
-      ...formData,
-      extend_days: formData.extend_days || 0,
+      vip_days: parseInt(formData.extend_days) || 0,
+      f_name: formData.fname,
+      l_name: formData.lname,
+      phone: formData.tel,
     };
 
     try {
-      console.log(submitData);
-      const response = await axios.post(apiUrl, submitData, {
+      const response = await axios.put(apiUrl, submitData, {
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-      if (response.status === 200 || response.status === 201) {
+      if (response.status === 200) {
         setStatusMessage("แก้ไขข้อมูลสำเร็จ!");
         setStatusType("success");
         setTimeout(() => {
@@ -129,6 +129,7 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
                   </label>
                   <input
                     type="number"
+                    value={formData.extend_days}
                     placeholder="0"
                     onChange={(e) =>
                       setFormData({ ...formData, extend_days: e.target.value })

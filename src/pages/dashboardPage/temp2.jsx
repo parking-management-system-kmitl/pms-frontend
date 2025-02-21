@@ -3,6 +3,7 @@ import { Card } from "../../components/ui/Card";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { th } from "date-fns/locale";
 import "react-datepicker/dist/react-datepicker.css";
+import "./DashboardPage.css";
 import { Button } from "../../components/ui/Button";
 import {
   XAxis,
@@ -22,6 +23,7 @@ import PageCotainer from "../PageCotainer";
 import income from "../../assets/income.svg";
 import carIn from "../../assets/car_in.svg";
 import carOut from "../../assets/car_out.svg";
+import { format, differenceInDays } from "date-fns";
 
 registerLocale("th", th);
 
@@ -29,114 +31,179 @@ const Dashboard = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
+  const [tempStartDate, setTempStartDate] = useState(new Date());
+  const [tempEndDate, setTempEndDate] = useState(new Date());
   const [selectedRange, setSelectedRange] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const apiUrl = process.env.REACT_APP_API_URL;
+
+  const handleRangeSelect = (range) => {
+    setSelectedRange(range.label);
+    const dates = calculateDateRange(range.days, range.type || "days");
+    setTempStartDate(dates.start);
+    setTempEndDate(dates.end);
+  };
+
+  const handleDateChange = (dates) => {
+    const [start, end] = dates;
+    setTempStartDate(start);
+    setTempEndDate(end);
+  };
+
+  const calculateDateRange = (days, type = "days") => {
+    const today = new Date();
+    let pastDate = new Date();
+
+    if (type === "month") {
+      if (days === 0) {
+        pastDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        today.setMonth(today.getMonth() + 1, 0);
+      } else if (days === 1) {
+        pastDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        today.setMonth(today.getMonth(), 0);
+      }
+    } else if (days === 1) {
+      pastDate.setDate(today.getDate() - 1);
+      today.setDate(today.getDate() - 1);
+    } else {
+      pastDate.setDate(today.getDate() - days);
+    }
+
+    return { start: pastDate, end: today };
+  };
+
+  const handleApplyDateRange = () => {
+    if (tempStartDate && tempEndDate) {
+      setStartDate(tempStartDate);
+      setEndDate(tempEndDate);
+      setShowDatePicker(false);
+    }
+  };
+
+  const handleCancelDateRange = () => {
+    setTempStartDate(startDate);
+    setTempEndDate(endDate);
+    setShowDatePicker(false);
+  };
+
+  // Format graph data based on date range
+  const getFormattedGraphData = () => {
+    if (!dashboardData?.graphData) return [];
+
+    try {
+      const daysDifference = differenceInDays(endDate, startDate);
+
+      if (daysDifference === 0 && dashboardData.graphData.revenueByHour) {
+        return dashboardData.graphData.revenueByHour.map((item) => ({
+          time: `${item.hour}:00`,
+          revenue: item.revenue,
+        }));
+      } else if (daysDifference <= 7 && dashboardData.graphData.revenueByDay) {
+        return dashboardData.graphData.revenueByDay.map((item) => ({
+          time: format(new Date(item.day), "dd/MM/yyyy"),
+          revenue: item.revenue,
+        }));
+      } else if (
+        daysDifference <= 365 &&
+        dashboardData.graphData.revenueByMonth
+      ) {
+        return dashboardData.graphData.revenueByMonth.map((item) => ({
+          time: item.month,
+          revenue: item.revenue,
+        }));
+      } else if (dashboardData.graphData.revenueByYear) {
+        return dashboardData.graphData.revenueByYear.map((item) => ({
+          time: item.year.toString(),
+          revenue: item.revenue,
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error("Error formatting graph data:", error);
+      return [];
+    }
+  };
+
+  // Format vehicle data based on date range
+  const getFormattedVehicleData = () => {
+    if (!dashboardData?.graphData) return [];
+
+    try {
+      const daysDifference = differenceInDays(endDate, startDate);
+
+      if (daysDifference === 0 && dashboardData.graphData.entriesByHour) {
+        return dashboardData.graphData.entriesByHour.map((item, index) => ({
+          time: `${item.hour}:00`,
+          entries: item.entries,
+          exits: dashboardData.graphData.exitsByHour?.[index]?.exits || 0,
+        }));
+      } else if (daysDifference <= 7 && dashboardData.graphData.entriesByDay) {
+        return dashboardData.graphData.entriesByDay.map((item, index) => ({
+          time: format(new Date(item.day), "dd/MM/yyyy"),
+          entries: item.entries,
+          exits: dashboardData.graphData.exitsByDay?.[index]?.exits || 0,
+        }));
+      } else if (
+        daysDifference <= 365 &&
+        dashboardData.graphData.entriesByMonth
+      ) {
+        return dashboardData.graphData.entriesByMonth.map((item, index) => ({
+          time: item.month,
+          entries: item.entries,
+          exits: dashboardData.graphData.exitsByMonth?.[index]?.exits || 0,
+        }));
+      } else if (dashboardData.graphData.entriesByYear) {
+        return dashboardData.graphData.entriesByYear.map((item, index) => ({
+          time: item.year.toString(),
+          entries: item.entries,
+          exits: dashboardData.graphData.exitsByYear?.[index]?.exits || 0,
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error("Error formatting vehicle data:", error);
+      return [];
+    }
+  };
 
   const fetchDashboardData = async (start, end) => {
     try {
-      // Convert dates to ISO strings
-      const startDateParam = start.toISOString();
-      const endDateParam = end.toISOString();
-  
-      // Construct the request body
-      const body = JSON.stringify({
-        startDate: startDateParam,
-        endDate: endDateParam,
-      });
-  
-      // Send a GET request with the body
-      const response = await fetch("/dashboard", {
-        method: "GET", // ใช้ GET
+      setLoading(true);
+      setError(null);
+
+      const body = {
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      };
+
+      const response = await fetch(`${apiUrl}/dashboard`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: body, // ส่ง body กับ GET (ไม่แนะนำ)
+        body: JSON.stringify(body),
       });
-  
-      // Parse the response
+
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+
       const data = await response.json();
       setDashboardData(data);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      setError(error.message);
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboardData(startDate, endDate);
-  }, [startDate, endDate]);
-
-  const formatGraphData = () => {
-    if (!dashboardData?.graphData) return [];
-
-    // Check which type of data we have based on the keys
-    const graphData = dashboardData.graphData;
-    if (graphData.revenueByHour) {
-      return graphData.revenueByHour.map((item) => ({
-        label: `${item.hour}:00`,
-        revenue: item.revenue,
-        entries:
-          graphData.entriesByHour.find((entry) => entry.hour === item.hour)
-            ?.entries || 0,
-        exits:
-          graphData.exitsByHour.find((exit) => exit.hour === item.hour)
-            ?.exits || 0,
-      }));
-    } else if (graphData.revenueByDay) {
-      return graphData.revenueByDay.map((item) => ({
-        label: new Date(item.day).toLocaleDateString("th-TH", {
-          day: "numeric",
-          month: "short",
-        }),
-        revenue: item.revenue,
-        entries:
-          graphData.entriesByDay.find((entry) => entry.day === item.day)
-            ?.entries || 0,
-        exits:
-          graphData.exitsByDay.find((exit) => exit.day === item.day)?.exits ||
-          0,
-      }));
-    } else if (graphData.revenueByMonth) {
-      return graphData.revenueByMonth.map((item) => ({
-        label: new Date(item.month + "-01").toLocaleDateString("th-TH", {
-          month: "short",
-          year: "numeric",
-        }),
-        revenue: item.revenue,
-        entries:
-          graphData.entriesByMonth.find((entry) => entry.month === item.month)
-            ?.entries || 0,
-        exits:
-          graphData.exitsByMonth.find((exit) => exit.month === item.month)
-            ?.exits || 0,
-      }));
-    } else if (graphData.revenueByYear) {
-      return graphData.revenueByYear.map((item) => ({
-        label: item.year.toString(),
-        revenue: item.revenue,
-        entries:
-          graphData.entriesByYear.find((entry) => entry.year === item.year)
-            ?.entries || 0,
-        exits:
-          graphData.exitsByYear.find((exit) => exit.year === item.year)
-            ?.exits || 0,
-      }));
+    if (startDate && endDate) {
+      fetchDashboardData(startDate, endDate);
     }
-    return [];
-  };
-
-  const handleRangeSelect = (range) => {
-    setSelectedRange(range.label);
-    setDateRange(range.days, range.type || "days");
-  };
-
-  const handleDateChange = (dates) => {
-    const [start, end] = dates;
-    setStartDate(start);
-    setEndDate(end);
-  };
+  }, [startDate, endDate]);
 
   const predefinedRanges = [
     { label: "วันนี้", days: 0 },
@@ -173,42 +240,35 @@ const Dashboard = () => {
     setEndDate(today);
   };
 
-  const data = {
-    totalRevenue: 30000,
-    revenueChange: -4.3,
-    totalEntries: 540,
-    entriesChange: 8.5,
-    totalExits: 500,
-    exitsChange: 8.5,
-    revenueData: [
-      { month: "ม.ค.", revenue: 10000 },
-      { month: "ก.พ.", revenue: 15000 },
-      { month: "มี.ค.", revenue: 30000 },
-      { month: "เม.ย.", revenue: 25000 },
-      { month: "พ.ค.", revenue: 20000 },
-      { month: "มิ.ย.", revenue: 5000 },
-      { month: "ก.ค.", revenue: 28000 },
-      { month: "ส.ค.", revenue: 26000 },
-      { month: "ก.ย.", revenue: 22000 },
-      { month: "ต.ค.", revenue: 18000 },
-      { month: "พ.ย.", revenue: 24000 },
-      { month: "ธ.ค.", revenue: 15000 },
-    ],
-    carData: [
-      { month: "ม.ค.", entries: 400, exits: 350 },
-      { month: "ก.พ.", entries: 450, exits: 400 },
-      { month: "มี.ค.", entries: 500, exits: 450 },
-      { month: "เม.ย.", entries: 300, exits: 250 },
-      { month: "พ.ค.", entries: 350, exits: 300 },
-      { month: "มิ.ย.", entries: 600, exits: 550 },
-      { month: "ก.ค.", entries: 700, exits: 650 },
-      { month: "ส.ค.", entries: 500, exits: 450 },
-      { month: "ก.ย.", entries: 400, exits: 350 },
-      { month: "ต.ค.", entries: 300, exits: 250 },
-      { month: "พ.ย.", entries: 500, exits: 450 },
-      { month: "ธ.ค.", entries: 600, exits: 550 },
-    ],
+  const getFormattedDateRange = () => {
+    if (!startDate || !endDate) return "ภาพรวม (วันที่ 25 ม.ค. 25 - วันที่ 17 ก.พ. 25)";
+  
+    const formattedStartDate = format(startDate, "วันที่ dd MMM yy", { locale: th });
+    const formattedEndDate = format(endDate, "วันที่ dd MMM yy", { locale: th });
+  
+    return `ภาพรวม (${formattedStartDate} - ${formattedEndDate})`;
   };
+
+  const getFormattedCurrentDate = () => {
+    const currentDate = new Date();
+    return `ข้อมูล ณ วันที่ ${format(currentDate, "dd MMM yy", { locale: th })}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <PageCotainer>
@@ -217,9 +277,9 @@ const Dashboard = () => {
           <div className="w-full">
             <h1 className="text-2xl font-bold mb-6">แดชบอร์ด</h1>
             <div className="flex justify-between items-center">
-              <p className="font-medium">ภาพรวม (ม.ค. 67 - ธ.ค. 67)</p>
+              <p className="font-medium">{getFormattedDateRange()}</p>
               <div className="flex items-center gap-6">
-                <h1 className="font-medium">ข้อมูล ณ วันที่ 30 ธ.ค. 67</h1>
+                <h1 className="font-medium">{getFormattedCurrentDate()}</h1>
                 <Button
                   className="flex gap-2 border border-blue-300 text-blue-500 rounded-lg"
                   onClick={() => setShowDatePicker(!showDatePicker)}
@@ -237,12 +297,12 @@ const Dashboard = () => {
                     <p
                       key={range.label}
                       className={`cursor-pointer p-2 hover:bg-gray-100 w-[100px] font-thin text-sm text-gray-500 
-                          ${
-                            selectedRange === range.label
-                              ? "bg-gray-50 border-r-4 border-blue-500 text-blue-400"
-                              : ""
-                          }`}
-                      onClick={() => handleRangeSelect(range)} // Update the selected range on click
+                    ${
+                      selectedRange === range.label
+                        ? "bg-gray-50 border-r-4 border-blue-500 text-blue-400"
+                        : ""
+                    }`}
+                      onClick={() => handleRangeSelect(range)}
                     >
                       {range.label}
                     </p>
@@ -251,10 +311,10 @@ const Dashboard = () => {
                 <div className="p-2">
                   <div className="flex gap-3">
                     <DatePicker
-                      selected={startDate}
+                      selected={tempStartDate}
                       onChange={handleDateChange}
-                      startDate={startDate}
-                      endDate={endDate}
+                      startDate={tempStartDate}
+                      endDate={tempEndDate}
                       selectsRange
                       locale="th"
                       dateFormat="dd/MM/yyyy"
@@ -267,14 +327,14 @@ const Dashboard = () => {
                     <Button
                       className="text-gray-500"
                       style={{ color: "#007AFF" }}
-                      onClick={() => setShowDatePicker(false)}
+                      onClick={handleCancelDateRange}
                     >
                       ยกเลิก
                     </Button>
                     <Button
                       className="text-white"
                       style={{ backgroundColor: "#007AFF" }}
-                      onClick={() => setShowDatePicker(false)}
+                      onClick={handleApplyDateRange}
                     >
                       เลือก
                     </Button>
@@ -311,7 +371,7 @@ const Dashboard = () => {
               ) : (
                 <HiTrendingDown className="mr-2 text-2xl" />
               )}
-              {Math.abs(dashboardData?.revenue.percentageChange)}%
+              {Math.abs(dashboardData?.revenue.percentageChange)}%{" "}
               {dashboardData?.revenue.percentageChange >= 0
                 ? "เพิ่มขึ้น"
                 : "ลดลง"}
@@ -322,8 +382,8 @@ const Dashboard = () => {
             <div className="flex justify-between">
               <div>
                 <p className="text-gray-600 font-medium mb-3">จำนวนรถเข้า</p>
-                <h2 className="text-3xl font-bold mb-6 ">
-                  {data.totalEntries}
+                <h2 className="text-3xl font-bold mb-6">
+                  {dashboardData?.entries.current.toLocaleString()}
                 </h2>
               </div>
               <img
@@ -332,16 +392,33 @@ const Dashboard = () => {
                 className="text-xl self-start"
               />
             </div>
-            <p className="flex items-center text-sm text-green-500">
-              <HiTrendingUp className="mr-2 text-2xl" />
-              {data.entriesChange}% เพิ่มขึ้นจากปัจจุบัน
+            <p
+              className={`flex items-center text-sm ${
+                dashboardData?.entries.percentageChange >= 0
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
+            >
+              {dashboardData?.entries.percentageChange >= 0 ? (
+                <HiTrendingUp className="mr-2 text-2xl" />
+              ) : (
+                <HiTrendingDown className="mr-2 text-2xl" />
+              )}
+              {Math.abs(dashboardData?.entries.percentageChange)}%{" "}
+              {dashboardData?.entries.percentageChange >= 0
+                ? "เพิ่มขึ้น"
+                : "ลดลง"}
+              จากปัจจุบัน
             </p>
           </Card>
+
           <Card className="p-4">
             <div className="flex justify-between">
               <div>
                 <p className="text-gray-600 font-medium mb-3">จำนวนรถออก</p>
-                <h2 className="text-3xl font-bold mb-6">{data.totalExits}</h2>
+                <h2 className="text-3xl font-bold mb-6">
+                  {dashboardData?.exits.current.toLocaleString()}
+                </h2>
               </div>
               <img
                 src={carOut}
@@ -349,9 +426,23 @@ const Dashboard = () => {
                 className="text-xl self-start"
               />
             </div>
-            <p className="flex items-center text-sm text-green-500">
-              <HiTrendingUp className="mr-2 text-2xl" />
-              {data.exitsChange}% เพิ่มขึ้นจากปัจจุบัน
+            <p
+              className={`flex items-center text-sm ${
+                dashboardData?.exits.percentageChange >= 0
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
+            >
+              {dashboardData?.exits.percentageChange >= 0 ? (
+                <HiTrendingUp className="mr-2 text-2xl" />
+              ) : (
+                <HiTrendingDown className="mr-2 text-2xl" />
+              )}
+              {Math.abs(dashboardData?.exits.percentageChange)}%{" "}
+              {dashboardData?.exits.percentageChange >= 0
+                ? "เพิ่มขึ้น"
+                : "ลดลง"}
+              จากปัจจุบัน
             </p>
           </Card>
         </div>
@@ -363,7 +454,7 @@ const Dashboard = () => {
               height={250}
               className="pl-6 pr-6"
             >
-              <AreaChart data={formatGraphData()}>
+              <AreaChart data={getFormattedGraphData()}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#3998FF" stopOpacity={1} />
@@ -375,21 +466,9 @@ const Dashboard = () => {
                     />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="label" tick={{ fontSize: "12px" }} />
+                <XAxis dataKey="time" tick={{ fontSize: "12px" }} />
                 <YAxis tick={{ fontSize: "12px" }} />
-                <Tooltip
-                  itemStyle={{ color: "white", fontSize: "14px" }}
-                  contentStyle={{
-                    backgroundColor: "black",
-                    borderRadius: "8px",
-                    padding: "10px",
-                  }}
-                  labelStyle={{
-                    color: "#E5E5EF",
-                    fontSize: "14px",
-                    textAlign: "center",
-                  }}
-                />
+                <Tooltip />
                 <Area
                   type="monotone"
                   dataKey="revenue"
@@ -400,49 +479,18 @@ const Dashboard = () => {
               </AreaChart>
             </ResponsiveContainer>
           </Card>
+
           <Card className="p-4">
             <p className="pt-4 text-lg font-bold mb-6">ภาพรวมรถเข้า-ออก</p>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={formatGraphData()}>
+              <BarChart data={getFormattedVehicleData()}>
                 <CartesianGrid strokeDasharray="5 5" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: "12px" }} />
+                <XAxis dataKey="time" tick={{ fontSize: "12px" }} />
                 <YAxis tick={{ fontSize: "12px" }} />
-                <Tooltip
-                  itemStyle={{ color: "white", fontSize: "14px" }}
-                  contentStyle={{
-                    backgroundColor: "black",
-                    borderRadius: "8px",
-                    padding: "10px",
-                  }}
-                  labelStyle={{
-                    color: "#E5E5EF",
-                    fontSize: "14px",
-                    textAlign: "center",
-                  }}
-                />
-                <Legend
-                  iconType="circle"
-                  verticalAlign="top"
-                  align="center"
-                  layout="horizontal"
-                  wrapperStyle={{
-                    paddingBottom: 20,
-                    fontSize: "12px",
-                    fontWeight: "500",
-                  }}
-                />
-                <Bar
-                  dataKey="entries"
-                  name="รถเข้า"
-                  fill="#007AFF"
-                  radius={[10, 10, 0, 0]}
-                />
-                <Bar
-                  dataKey="exits"
-                  name="รถออก"
-                  fill="#D9EBFF"
-                  radius={[10, 10, 0, 0]}
-                />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="entries" fill="#007AFF" radius={[10, 10, 0, 0]} />
+                <Bar dataKey="exits" fill="#D9EBFF" radius={[10, 10, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>

@@ -16,6 +16,7 @@ import DashboardPage from "./pages/dashboardPage/DashboardPage";
 import RegisPaymentPage from "./pages/regisPaymentPage/RegisPaymentPage";
 import RegisVipReceiptPage from "./pages/regisVipReceiptPage/RegisVipReceiptPage";
 import VipErrorPage from "./pages/vipErrorPage/VipErrorPage";
+import ProtectedRoute from "./layouts/components/protectedRoute/ProtectedRoute";
 
 const LoginPage = lazy(() => import("./pages/loginPage/LoginPage"));
 const ListVipPage = lazy(() => import("./pages/listVipPage/ListVipPage"));
@@ -68,7 +69,7 @@ const router = createBrowserRouter([
       <Suspense fallback={<SpinnerLoading />}>
         <RegisPaymentPage />
       </Suspense>
-    )
+    ),
   },
   {
     path: "/regisvipreceipt",
@@ -76,7 +77,7 @@ const router = createBrowserRouter([
       <Suspense fallback={<SpinnerLoading />}>
         <RegisVipReceiptPage />
       </Suspense>
-    )
+    ),
   },
   {
     path: "/404vip",
@@ -84,46 +85,51 @@ const router = createBrowserRouter([
       <Suspense fallback={<SpinnerLoading />}>
         <VipErrorPage />
       </Suspense>
-    )
+    ),
   },
   {
     element: <Layout />,
     children: [
       {
-        path: "/dashboard",
-        element: <DashboardPage />,
-      },
-      {
-        path: "/listvip",
-        element: (
-          <Suspense fallback={<SpinnerLoading />}>
-            <ListVipPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/detail",
-        element: (
-          <Suspense fallback={<SpinnerLoading />}>
-            <DetailPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/demo-redux",
-        element: (
-          <Suspense fallback={<SpinnerLoading />}>
-            <DemoReduxPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/manage",
-        element: (
-          <Suspense fallback={<SpinnerLoading />}>
-            <ManagePage />
-          </Suspense>
-        ),
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: "/dashboard",
+            element: <DashboardPage />,
+          },
+          {
+            path: "/listvip",
+            element: (
+              <Suspense fallback={<SpinnerLoading />}>
+                <ListVipPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/detail",
+            element: (
+              <Suspense fallback={<SpinnerLoading />}>
+                <DetailPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/demo-redux",
+            element: (
+              <Suspense fallback={<SpinnerLoading />}>
+                <DemoReduxPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/manage",
+            element: (
+              <Suspense fallback={<SpinnerLoading />}>
+                <ManagePage />
+              </Suspense>
+            ),
+          },
+        ],
       },
     ],
   },

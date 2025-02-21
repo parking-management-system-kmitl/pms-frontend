@@ -174,9 +174,15 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
+      const adjustedStartDate = new Date(start);
+      adjustedStartDate.setHours(7, 0, 0, 0);
+
+      const adjustedEndDate = new Date(end);
+      adjustedEndDate.setHours(23, 59, 59, 999);
+
       const body = {
-        startDate: start.toISOString(),
-        endDate: end.toISOString(),
+        startDate: adjustedStartDate.toISOString(),
+        endDate: adjustedEndDate.toISOString(),
       };
 
       const response = await fetch(`${apiUrl}/dashboard`, {
@@ -214,30 +220,25 @@ const Dashboard = () => {
     { label: "เดือนที่แล้ว", days: 1, type: "month" },
   ];
 
-  const setDateRange = (days, type = "days") => {
-    const today = new Date();
-    let pastDate = new Date();
+  const getFormattedDateRange = () => {
+    if (!startDate || !endDate)
+      return "ภาพรวม (วันที่ 25 ม.ค. 25 - วันที่ 17 ก.พ. 25)";
 
-    if (type === "month") {
-      if (days === 0) {
-        // "เดือนนี้" (current month)
-        pastDate = new Date(today.getFullYear(), today.getMonth(), 1); // First day of the current month
-        today.setMonth(today.getMonth() + 1, 0); // Last day of the current month
-      } else if (days === 1) {
-        // "เดือนที่แล้ว" (previous month)
-        pastDate = new Date(today.getFullYear(), today.getMonth() - 1, 1); // First day of the previous month
-        today.setMonth(today.getMonth(), 0); // Last day of the previous month
-      }
-    } else if (days === 1) {
-      // "เมื่อวาน" (yesterday)
-      pastDate.setDate(today.getDate() - 1);
-      today.setDate(today.getDate() - 1); // End date also set to yesterday
-    } else {
-      pastDate.setDate(today.getDate() - days); // For ranges like 7 days or 30 days
-    }
+    const formattedStartDate = format(startDate, "วันที่ dd MMM yy", {
+      locale: th,
+    });
+    const formattedEndDate = format(endDate, "วันที่ dd MMM yy", {
+      locale: th,
+    });
 
-    setStartDate(pastDate);
-    setEndDate(today);
+    return `ภาพรวม (${formattedStartDate} - ${formattedEndDate})`;
+  };
+
+  const getFormattedCurrentDate = () => {
+    const currentDate = new Date();
+    return `ข้อมูล ณ วันที่ ${format(currentDate, "dd MMM yy", {
+      locale: th,
+    })}`;
   };
 
   if (loading) {
@@ -263,9 +264,9 @@ const Dashboard = () => {
           <div className="w-full">
             <h1 className="text-2xl font-bold mb-6">แดชบอร์ด</h1>
             <div className="flex justify-between items-center">
-              <p className="font-medium">ภาพรวม (ม.ค. 67 - ธ.ค. 67)</p>
+              <p className="font-medium">{getFormattedDateRange()}</p>
               <div className="flex items-center gap-6">
-                <h1 className="font-medium">ข้อมูล ณ วันที่ 30 ธ.ค. 67</h1>
+                <h1 className="font-medium">{getFormattedCurrentDate()}</h1>
                 <Button
                   className="flex gap-2 border border-blue-300 text-blue-500 rounded-lg"
                   onClick={() => setShowDatePicker(!showDatePicker)}

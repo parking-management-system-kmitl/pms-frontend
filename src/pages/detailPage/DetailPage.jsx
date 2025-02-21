@@ -45,8 +45,10 @@ function DetailPage() {
       const result = await response.json();
       if (result.data) {
         const formattedData = result.data.map((record) => ({
-          entry_records_id: record.type === "active" ? record.entry_records_id : null,
-          entry_exit_records_id: record.type === "completed" ? record.entry_exit_records_id : null,
+          entry_records_id:
+            record.type === "active" ? record.entry_records_id : null,
+          entry_exit_records_id:
+            record.type === "completed" ? record.entry_exit_records_id : null,
           car: record.car,
           entry_time: record.entry_time,
           exit_time: record.exit_time,
@@ -55,7 +57,7 @@ function DetailPage() {
           payments: record.payments || [],
           type: record.type,
           isVip: record.car.isVip,
-          entry_car_image_path: record.entry_car_image_path
+          entry_car_image_path: record.entry_car_image_path,
         }));
 
         setData(formattedData);
@@ -151,19 +153,6 @@ function DetailPage() {
     setSearchQuery(event.target.value);
   };
 
-  const formatDateTime = (dateTimeStr) => {
-    if (!dateTimeStr) return "-";
-    return new Date(dateTimeStr).toLocaleString();
-  };
-
-  const calculateDuration = (entry, exit) => {
-    if (!entry || !exit) return "-";
-    const duration = new Date(exit) - new Date(entry);
-    const hours = Math.floor(duration / (1000 * 60 * 60));
-    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
-  };
-
   return (
     <PageCotainer>
       <div className="flex flex-col">
@@ -213,7 +202,8 @@ function DetailPage() {
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.src = "/placeholder-car.jpg";
-                      e.target.className = "w-full h-full object-contain bg-gray-200";
+                      e.target.className =
+                        "w-full h-full object-contain bg-gray-200";
                     }}
                   />
                 ) : (
@@ -240,12 +230,15 @@ function DetailPage() {
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.src = "/placeholder-car.jpg";
-                          e.target.className = "w-full h-full object-contain bg-gray-200";
+                          e.target.className =
+                            "w-full h-full object-contain bg-gray-200";
                         }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                        <span className="text-gray-500 text-[8px]">No Image</span>
+                        <span className="text-gray-500 text-[8px]">
+                          No Image
+                        </span>
                       </div>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] p-0.5">
@@ -354,7 +347,7 @@ function DetailPage() {
                           : "-"}
                       </td>
                       <td className="px-4 py-3">
-                        {calculateDuration(row.entry_time, row.exit_time)}
+                        {row.parkedHours ? `${row.parkedHours} ชม.` : "-"}
                       </td>
                       <td className="px-4 py-3">{row.parkingFee} บาท</td>
                       <td className="px-4 py-3">{getStatus(row)}</td>
@@ -408,6 +401,7 @@ function DetailPage() {
           selectedRow={selectedRow}
           selectedDiscount={selectedDiscount}
           setSelectedDiscount={setSelectedDiscount}
+          carId={selectedRow?.car?.car_id}
         />
       </div>
     </PageCotainer>

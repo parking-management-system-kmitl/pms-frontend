@@ -1,0 +1,38 @@
+.toggle-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+  
+  .toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: all 0.3s;
+  }
+  
+  .toggle-checkbox:checked + .toggle-slider {
+    background-color: #2196F3;
+  }
+  
+  .toggle-checkbox:checked + .toggle-slider:before {
+    transform: translateX(20px);
+  }
