@@ -1,70 +1,64 @@
-import React, { useEffect ,useState } from "react";
+import React, { useEffect, useState } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
   const apiUrl = process.env.REACT_APP_API_URL;
-
   const navigate = useNavigate();
 
   useEffect(() => {
     AOS.init({ duration: 1000 });
   }, []);
 
-  // const handleSignIn = () => {
-  //   navigate("/detail");
-  // };
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
 
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+
+    // ตรวจสอบว่าฟิลด์ไม่ว่างเปล่า
+    if (!formData.username || !formData.password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     try {
-      console.log("start login ");
       const response = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
-      // แสดงข้อมูล response ทั้งหมด
+
       const data = await response.json();
 
-      if (response.ok && data.status === "success") {
+      if (response.ok && data.access_token) {
         // เก็บ token ใน localStorage
-        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem("access_token", data.access_token);
         console.log("Login successful!");
-        console.log("Token:", data.access_token);
         navigate("/detail");
       } else {
-        console.log("Login failed");
+        setError(data.message || "Login failed");
       }
-
-
-
     } catch (error) {
       console.error("Error during login:", error);
+      setError("An error occurred during login");
     }
   };
-
-
-
-
-  const [formData, setFormData] = useState({
-    adminname: "",
-    password: ""
-  });
-  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -88,21 +82,27 @@ function LoginPage() {
         >
           <h1 className="text-4xl font-bold mb-5">Sign In</h1>
 
+          {error && <div className="text-red-500">{error}</div>}
+
           <div className="flex flex-col w-full">
-            <label htmlFor="email" className="mb-1 text-lg">Email</label>
+            <label htmlFor="username" className="mb-1 text-lg">
+              Username
+            </label>
             <input
               type="text"
-              id="adminname"
-              name="adminname"
-              value={formData.adminname}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="Enter admin name"
+              placeholder="Enter username"
               className="h-10 px-5 bg-gray-200 rounded-md border-none focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col w-full mt-5">
-            <label htmlFor="password" className="mb-1 text-lg">Password</label>
+            <label htmlFor="password" className="mb-1 text-lg">
+              Password
+            </label>
             <input
               type="password"
               id="password"

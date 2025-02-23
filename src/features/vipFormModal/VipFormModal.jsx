@@ -23,12 +23,14 @@ const schema = yup
       .required("กรุณาระบุอายุสมาชิก VIP"),
   })
   .required();
+
 const apiUrl = process.env.REACT_APP_API_URL;
 
 function VipFormModal({ isOpen, handleClose, vipId }) {
   const [showNextModal, setShowNextModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState(""); // New state for success message
+  const [successMessage, setSuccessMessage] = useState("");
+  const [memberId, setMemberId] = useState(null);
   const [formData, setFormData] = useState({
     fname: "",
     lname: "",
@@ -39,60 +41,77 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isDirty },
   } = useForm({
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = (data) => {
-    setFormData({
-      fname: data.firstName,
-      lname: data.lastName,
-      tel: data.tel,
-      vip_days: data.vipDuration,
-    });
-    setShowNextModal(true);
-    handleClose();
+  const onSubmit = async (data) => {
+    try {
+      // First, register the member
+      const registerResponse = await axios.post(`${apiUrl}/member/register`, {
+        f_name: data.firstName,
+        l_name: data.lastName,
+        phone: data.tel,
+      });
+
+      if (!registerResponse.data.status) {
+        setErrorMessage(registerResponse.data.message);
+        return;
+      }
+
+      setMemberId(registerResponse.data.member_id);
+      setFormData({
+        fname: data.firstName,
+        lname: data.lastName,
+        tel: data.tel,
+        vip_days: data.vipDuration,
+      });
+      setShowNextModal(true);
+      handleClose();
+    } catch (error) {
+      console.error("Error during member registration:", error);
+      setErrorMessage(
+        error.response?.data?.message ||
+          "An error occurred during registration."
+      );
+    }
   };
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${apiUrl}/vip/reg`, {
-        fname: formData.fname,
-        lname: formData.lname,
-        tel: formData.tel,
+      const licenseplate = document.querySelector(
+        'input[placeholder="กรอกเลขทะเบียน"]'
+      ).value;
+
+      if (!licenseplate) {
+        setErrorMessage("กรุณากรอกเลขทะเบียนรถ");
+        return;
+      }
+
+      const linkResponse = await axios.post(`${apiUrl}/member/link-car`, {
+        phone: formData.tel,
+        licenseplate: licenseplate,
         vip_days: formData.vip_days,
       });
-      console.log("Registration successful:", response.data);
 
-      // Show success message if registration is successful
-      if (response.status === 201) {
-        setSuccessMessage("สมัครสมาชิกสำเร็จ!");
+      if (linkResponse.data.message === "Car linked successfully") {
+        setSuccessMessage("สมัครสมาชิกและลงทะเบียนรถสำเร็จ!");
         setTimeout(() => {
           window.location.reload();
         }, 1000);
       }
 
-      const licenseplate = document.querySelector(
-        'input[placeholder="กรอกเลขทะเบียน"]'
-      ).value;
-      if (licenseplate) {
-        const linkResponse = await axios.post(`${apiUrl}/cars/link-vip`, {
-          tel: formData.tel,
-          licenseplate: licenseplate,
-        });
-        console.log("Car linked to VIP successfully:", linkResponse.data);
-      } else {
-        console.error("License plate is required");
-      }
-
       setShowNextModal(false);
     } catch (error) {
-      console.error("Error during registration or linking car:", error);
-      setErrorMessage(
-        error.response?.data?.message || "An error occurred. Please try again."
-      );
+      console.error("Error during car linking:", error);
+      if (error.response?.status === 409) {
+        setErrorMessage("รถคันนี้ถูกลงทะเบียนไปแล้ว");
+      } else {
+        setErrorMessage(
+          error.response?.data?.message || "เกิดข้อผิดพลาดในการลงทะเบียนรถ"
+        );
+      }
     }
   };
 
@@ -195,6 +214,7 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
                 <button
                   className="bg-gray-400 px-4 py-2 text-white rounded-lg"
                   onClick={handleClose}
+                  type="button"
                 >
                   ยกเลิก
                 </button>
@@ -232,11 +252,9 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
                 <label className="block text-gray-700 mb-2">เบอร์ติดต่อ</label>
                 <input
                   type="text"
-                  value={formData.tel} // Make it editable
-                  onChange={(e) =>
-                    setFormData({ ...formData, tel: e.target.value })
-                  } // Update tel on change
-                  className="w-full border p-2 rounded"
+                  value={formData.tel}
+                  readOnly
+                  className="w-full border p-2 rounded bg-gray-100"
                 />
               </div>
 
@@ -250,7 +268,13 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex gap-4 justify-end">
+              <button
+                className="bg-gray-400 px-4 py-2 text-white rounded-lg"
+                onClick={closeNextModal}
+              >
+                ยกเลิก
+              </button>
               <button
                 className="bg-primary px-4 py-2 text-white rounded-lg"
                 onClick={handleRegister}

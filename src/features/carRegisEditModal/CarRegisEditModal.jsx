@@ -4,11 +4,11 @@ import { XCircleIcon } from "@heroicons/react/24/outline";
 
 const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
   const [statusMessage, setStatusMessage] = useState(null);
-  const [statusType, setStatusType] = useState(""); // 'success' or 'error'
+  const [statusType, setStatusType] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
   const [newLicensePlate, setNewLicensePlate] = useState("");
-  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false); // State for the delete confirmation modal
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -16,20 +16,23 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
 
   const handleDeleteCar = async (carId) => {
     try {
-      const response = await axios.post(`${apiUrl}/cars/unlink-vip`, {
-        licenseplate: selectedCar.licenseplate, // Send the license plate for deletion
+      const response = await axios.post(`${apiUrl}/member/unlink-car`, {
+        car_id: carId,
       });
 
-      if (response.status === 200 || response.status === 201) {
-        setCarData((prevData) => prevData.filter((car) => car.id !== carId));
-        setStatusMessage("ลบทะเบียนรถสำเร็จ!");
+      if (response.data.success) {
+        // Update local state to remove the unlinked car
+        setCarData((prevData) =>
+          prevData.filter((car) => car.car_id !== carId)
+        );
+        setStatusMessage("ยกเลิกการเชื่อมต่อรถสำเร็จ!");
         setStatusType("success");
         setTimeout(() => {
           window.location.reload();
         }, 1000);
       }
     } catch (error) {
-      setStatusMessage("ไม่สามารถลบทะเบียนรถได้");
+      setStatusMessage("ไม่สามารถยกเลิกการเชื่อมต่อรถได้");
       setStatusType("error");
     }
   };
@@ -42,17 +45,18 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
     }
 
     try {
-      console.log(selectedCar.licenseplate);
-      console.log(newLicensePlate);
-      const response = await axios.post(`${apiUrl}/cars/updatelp`, {
-        old_lp: selectedCar.licenseplate,
-        new_lp: newLicensePlate,
-      });
+      const response = await axios.put(
+        `${apiUrl}/vip/updatelp/${selectedCar.car_id}`,
+        {
+          license_plate: newLicensePlate,
+        }
+      );
 
-      if (response.status === 200 || response.status === 201) {
+      if (response.status === 200) {
+        // Update the local state with the new license plate
         setCarData((prevData) =>
           prevData.map((car) =>
-            car.id === selectedCar.id
+            car.car_id === selectedCar.car_id
               ? { ...car, licenseplate: newLicensePlate }
               : car
           )
@@ -105,7 +109,7 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
               {carData.length > 0 ? (
                 carData.map((car) => (
                   <div
-                    key={car.id}
+                    key={car.car_id}
                     className="flex justify-between items-center border-b py-3"
                   >
                     <span>{car.licenseplate}</span>
@@ -123,7 +127,7 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
                         className="text-red-500"
                         onClick={() => {
                           setSelectedCar(car);
-                          setConfirmDeleteModalOpen(true); // Open the delete confirmation modal
+                          setConfirmDeleteModalOpen(true);
                         }}
                       >
                         ลบ
@@ -134,15 +138,6 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
               ) : (
                 <p>ไม่มีทะเบียนรถ</p>
               )}
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
-                onClick={handleClose}
-              >
-                ปิด
-              </button>
             </div>
           </>
         )}
@@ -185,8 +180,13 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
       {confirmDeleteModalOpen && selectedCar && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-lg w-[400px]">
-            <h3 className="text-xl font-bold mb-4">ยืนยันการลบทะเบียนรถ</h3>
-            <p>คุณต้องการลบทะเบียนรถ {selectedCar.licenseplate} หรือไม่?</p>
+            <h3 className="text-xl font-bold mb-4">
+              ยืนยันการยกเลิกการเชื่อมต่อรถ
+            </h3>
+            <p>
+              คุณต้องการยกเลิกการเชื่อมต่อรถทะเบียน {selectedCar.licenseplate}{" "}
+              หรือไม่?
+            </p>
             <div className="mt-6 flex justify-end space-x-4">
               <button
                 className="bg-gray-300 px-4 py-2 rounded-lg"
@@ -197,7 +197,7 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
               <button
                 className="bg-red-500 px-4 py-2 text-white rounded-lg"
                 onClick={() => {
-                  handleDeleteCar(selectedCar.id);
+                  handleDeleteCar(selectedCar.car_id);
                   setConfirmDeleteModalOpen(false);
                 }}
               >

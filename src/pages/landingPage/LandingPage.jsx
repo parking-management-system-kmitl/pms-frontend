@@ -8,6 +8,7 @@ function LandingPage() {
   const id = searchParams.get("id");
 
   const [parkingData, setParkingData] = useState(null);
+  const [latestPayment, setLatestPayment] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const formatDateTime = (dateTime) => {
@@ -24,29 +25,47 @@ function LandingPage() {
 
   useEffect(() => {
     console.log("License Plate ID:", id);
-    const fetchParkingData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(
-          `${process.env.REACT_APP_API_URL}/payments/latest`,
+        // First fetch latest payment history
+        const paymentResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}/parking/lastestpaymenthistory/${id}`
+        );
+        const paymentResult = await paymentResponse.json();
+        
+        if (paymentResult.latestPayment) {
+          setLatestPayment(paymentResult.latestPayment);
+          // If there's a latest payment without exitTime, we don't need to check current parking
+          if (!paymentResult.latestPayment.exitTime) {
+            setParkingData(null);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // If no active payment or payment is completed (has exitTime), check current parking
+        const parkingResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}/parking/payment/check`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ licenseplate: id }),
+            body: JSON.stringify({ licensePlate: id }),
           }
         );
-        const result = await response.json();
-        if (result.status === "success") {
-          setParkingData(result.data);
+        const parkingResult = await parkingResponse.json();
+        if (parkingResult.success) {
+          setParkingData(parkingResult.data);
         }
       } catch (error) {
-        console.error("Error fetching parking data:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-    if (id) fetchParkingData();
+
+    if (id) fetchData();
   }, [id]);
 
   const handlePayment = () => {
@@ -55,11 +74,27 @@ function LandingPage() {
 
   if (loading) return <p>Loading...</p>;
 
-  if (!parkingData) return <p>ไม่พบข้อมูลการจอด</p>;
+  if (!parkingData && !latestPayment) return <p>ไม่พบข้อมูลการจอด</p>;
 
-  const { currentParking, latestPayment } = parkingData;
-  const isPaid = currentParking.isPaid === 1;
-  const displayData = isPaid ? latestPayment : currentParking;
+  // Use parking data if available, otherwise use latest payment
+  const displayData = parkingData || { lastPayment: latestPayment };
+  const needsPayment = parkingData?.needNewPayment;
+  const paymentDetails = parkingData?.newPaymentDetails;
+
+  // Calculate duration in hours and minutes
+  const getDuration = (startTime, currentTime) => {
+    const start = new Date(startTime);
+    const current = new Date(currentTime);
+    const diffInMinutes = Math.floor((current - start) / (1000 * 60));
+    return {
+      hours: Math.floor(diffInMinutes / 60),
+      minutes: diffInMinutes % 60
+    };
+  };
+
+  const duration = parkingData ? 
+    getDuration(parkingData.entryTime, parkingData.currentTime) :
+    { hours: 0, minutes: 0 };
 
   return (
     <div>
@@ -72,24 +107,26 @@ function LandingPage() {
           </div>
         </div>
         <div className="space-y-4">
-          {isPaid ? (
+          {(!needsPayment && displayData.lastPayment) ? (
             <>
               <p className="text-lg">ประวัติการชำระเงินล่าสุด</p>
               <div className="flex justify-between">
                 <p>วันเวลาเข้า</p>
-                <p>{formatDateTime(latestPayment.entryTime)}</p>
+                <p>{formatDateTime(displayData.lastPayment.entryTime)}</p>
               </div>
-              <div className="flex justify-between">
-                <p>วันเวลาออก</p>
-                <p>{formatDateTime(latestPayment.exitTime)}</p>
-              </div>
+              {displayData.lastPayment.exitTime && (
+                <div className="flex justify-between">
+                  <p>วันเวลาออก</p>
+                  <p>{formatDateTime(displayData.lastPayment.exitTime)}</p>
+                </div>
+              )}
               <div className="flex justify-between">
                 <p>จำนวนเงินที่ชำระ</p>
-                <p>{latestPayment.payment.amount} บาท</p>
+                <p>{displayData.lastPayment.amount} บาท</p>
               </div>
               <div className="flex justify-between">
                 <p>เวลาที่ชำระ</p>
-                <p>{formatDateTime(latestPayment.payment.paid_at)}</p>
+                <p>{formatDateTime(displayData.lastPayment.paidAt)}</p>
               </div>
             </>
           ) : (
@@ -97,32 +134,41 @@ function LandingPage() {
               <p className="text-lg">รายละเอียดการจอดรถ</p>
               <div className="flex justify-between">
                 <p>วันเวลาเข้า</p>
-                <p>{formatDateTime(currentParking.entryTime)}</p>
+                <p>{formatDateTime(parkingData.entryTime)}</p>
               </div>
               <div className="flex justify-between">
                 <p>วันเวลาปัจจุบัน</p>
-                <p>{formatDateTime(currentParking.currentTime)}</p>
+                <p>{formatDateTime(parkingData.currentTime)}</p>
               </div>
               <div className="flex justify-between">
                 <p>ระยะเวลาการจอด</p>
                 <p>
-                  {currentParking.duration.hours} ชม.{" "}
-                  {currentParking.duration.minutes} นาที
+                  {duration.hours} ชม. {duration.minutes} นาที
                 </p>
               </div>
-              <div className="flex justify-between">
-                <p>สิทธิ์จอดฟรี</p>
-                <p>{currentParking.freeHours} ชม.</p>
-              </div>
-              <div className="flex justify-between">
-                <p>ค่าบริการจอดรถ</p>
-                <p>{currentParking.parkingFee} บาท</p>
-              </div>
+              {paymentDetails && (
+                <>
+                  <div className="flex justify-between">
+                    <p>ค่าบริการจอดรถ</p>
+                    <p>{paymentDetails.originalAmount} บาท</p>
+                  </div>
+                  {parseFloat(paymentDetails.discount) > 0 && (
+                    <div className="flex justify-between">
+                      <p>ส่วนลด</p>
+                      <p>{paymentDetails.discount} บาท</p>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <p>ยอดชำระ</p>
+                    <p>{paymentDetails.amountAfterDiscount} บาท</p>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
       </div>
-      {!isPaid && (
+      {needsPayment && (
         <div className="flex flex-col justify-center items-end space-y-4 w-full absolute bottom-0 p-5 border-t-[0.5px] border-gray-300">
           <button
             onClick={handlePayment}

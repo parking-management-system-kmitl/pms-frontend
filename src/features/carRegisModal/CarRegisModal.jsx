@@ -9,32 +9,59 @@ const CarRegisModal = ({ isOpen, onClose, formData, setFormData }) => {
 
   if (!isOpen) return null;
 
-  const apiUrl = `${process.env.REACT_APP_API_URL}/cars/link-vip`;
+  const apiUrl = `${process.env.REACT_APP_API_URL}/member/link-car`;
 
   const handleSubmit = async () => {
     // ตรวจสอบข้อมูลใน formData ก่อนส่งคำขอ
-    console.log(formData.tel);
-    console.log(formData.licenseplate);
-    if (!formData.tel || !formData.licenseplate) {
+    if (!formData.tel || !formData.licenseplate || !formData.vip_days) {
       setStatusMessage("กรุณากรอกข้อมูลให้ครบถ้วน");
       setStatusType("error");
       return;
     }
 
+    // ตรวจสอบว่าจำนวนวันเป็นตัวเลขที่มากกว่า 0
+    const days = parseInt(formData.vip_days);
+    if (isNaN(days) || days <= 0) {
+      setStatusMessage("กรุณากรอกจำนวนวันให้ถูกต้อง");
+      setStatusType("error");
+      return;
+    }
+
     try {
-      const response = await axios.post(apiUrl, formData, {
-        headers: {
-          "Content-Type": "application/json",
+      const response = await axios.post(
+        apiUrl,
+        {
+          phone: formData.tel,
+          licenseplate: formData.licenseplate,
+          vip_days: formData.vip_days,
         },
-      });
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 200 || response.status === 201) {
         setStatusMessage("ลงทะเบียนสำเร็จ!");
         setStatusType("success");
+        // แสดงข้อมูลเพิ่มเติมจาก response
+        if (response.data.cars && response.data.cars.length > 0) {
+          const car = response.data.cars[0];
+          setStatusMessage(
+            `ลงทะเบียนสำเร็จ! วันหมดอายุ: ${new Date(
+              car.vip_expiry_date
+            ).toLocaleDateString("th-TH")} (เหลือ ${car.days_remaining} วัน)`
+          );
+        }
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "ไม่สามารถลงทะเบียนได้";
+      let errorMessage = "ไม่สามารถลงทะเบียนได้";
+      if (error.response?.status === 409) {
+        errorMessage = "รถคันนี้มีการลงทะเบียนแล้ว";
+      } else {
+        errorMessage = error.response?.data?.message || errorMessage;
+      }
       setStatusMessage(errorMessage);
       setStatusType("error");
     }
@@ -78,6 +105,7 @@ const CarRegisModal = ({ isOpen, onClose, formData, setFormData }) => {
                 <input
                   type="text"
                   placeholder="กรอกเบอร์โทร"
+                  value={formData.tel || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, tel: e.target.value })
                   }
@@ -90,9 +118,24 @@ const CarRegisModal = ({ isOpen, onClose, formData, setFormData }) => {
                 <input
                   type="text"
                   placeholder="กรอกเลขทะเบียน"
+                  value={formData.licenseplate || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, licenseplate: e.target.value })
                   }
+                  className="w-full border p-2 rounded"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">จำนวนวัน VIP</label>
+                <input
+                  type="number"
+                  placeholder="กรอกจำนวนวัน"
+                  value={formData.vip_days || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, vip_days: e.target.value })
+                  }
+                  min="1"
                   className="w-full border p-2 rounded"
                 />
               </div>

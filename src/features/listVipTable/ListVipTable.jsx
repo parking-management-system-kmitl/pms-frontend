@@ -11,7 +11,7 @@ import { CarRegisEditModal } from "../carRegisEditModal";
 function ListVipTable() {
   const [page, setPage] = useState(1);
   const [vipData, setVipData] = useState([]);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
+  const [total, setTotal] = useState(0);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isCarRegisOpen, setIsCarRegisOpen] = useState(false);
   const [vipId, setVipId] = useState(null);
@@ -19,6 +19,7 @@ function ListVipTable() {
   const [isVipEditOpen, setIsVipEditOpen] = useState(false);
   const [carData, setCarData] = useState([]);
   const [isCarRegisEditOpen, setIsCarRegisEditOpen] = useState(false);
+  const ITEMS_PER_PAGE = 10;
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -28,23 +29,49 @@ function ListVipTable() {
 
   const fetchVipData = async (currentPage) => {
     try {
-      const response = await fetch(`${apiUrl}/vip/list`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ page: currentPage, limit: 10 }),
-      });
+      const response = await fetch(
+        `${apiUrl}/vip/getvip?page=${currentPage}&limit=${ITEMS_PER_PAGE}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
       const result = await response.json();
-      if (result.status === "success") {
-        setVipData(result.data.items);
-        setMeta(result.data.meta);
+      if (result.data) {
+        // Group data by member_id to combine multiple car entries
+        const groupedData = result.data.reduce((acc, item) => {
+          const memberId = item.member?.member_id;
+          if (!acc[memberId]) {
+            acc[memberId] = {
+              member_id: memberId,
+              vip_expiry_date: item.vip_expiry_date,
+              cars: [],
+              member: item.member
+                ? {
+                    fname: item.member.f_name,
+                    lname: item.member.l_name,
+                    tel: item.member.phone,
+                  }
+                : null,
+            };
+          }
+          acc[memberId].cars.push({
+            car_id: item.car_id,
+            licenseplate: item.license_plate,
+          });
+          return acc;
+        }, {});
+
+        setVipData(Object.values(groupedData));
+        setTotal(result.total);
       }
     } catch (error) {
       console.error("Error fetching VIP data:", error);
     }
   };
 
-  const handleOpenForm = (vipId = null) => {
-    setVipId(vipId);
+  const handleOpenForm = (memberId = null) => {
+    setVipId(memberId);
     setIsFormOpen(true);
   };
 
@@ -59,8 +86,8 @@ function ListVipTable() {
     handleCloseCarRegis();
   };
 
-  const handleOpenCarRegisEdit = (vipId, cars) => {
-    setVipId(vipId);
+  const handleOpenCarRegisEdit = (memberId, cars) => {
+    setVipId(memberId);
     setCarData(cars);
     setIsCarRegisEditOpen(true);
   };
@@ -69,22 +96,22 @@ function ListVipTable() {
     setIsCarRegisEditOpen(false);
   };
 
-  const handleOpenVipEdit = (vipId, currentData) => {
-    setVipId(vipId);
+  const handleOpenVipEdit = (carId, currentData) => {
+    setVipId(carId);
     setFormData({
-      vip_member_id: currentData.vip_member_id,
-      fname: currentData.fname,
-      lname: currentData.lname,
-      tel: currentData.tel,
+      car_id: carId,
+      fname: currentData.member?.fname || "",
+      lname: currentData.member?.lname || "",
+      tel: currentData.member?.tel || "",
       extend_days: "0",
     });
     setIsVipEditOpen(true);
   };
 
   const getCurrentRowRange = () => {
-    const startRange = (page - 1) * 10 + 1;
-    const endRange = Math.min(page * 10, meta.total);
-    return `${startRange}-${endRange} of ${meta.total}`;
+    const startRange = (page - 1) * ITEMS_PER_PAGE + 1;
+    const endRange = Math.min(page * ITEMS_PER_PAGE, total);
+    return `${startRange}-${endRange} of ${total}`;
   };
 
   return (
@@ -135,10 +162,12 @@ function ListVipTable() {
         <tbody>
           {vipData.map((row, index) => (
             <tr
-              key={row.vip_member_id}
+              key={row.member_id || index}
               className="border-b text-black text-sm font-thin"
             >
-              <td className="px-4 py-3">{index + 1 + (page - 1) * 10}</td>
+              <td className="px-4 py-3">
+                {index + 1 + (page - 1) * ITEMS_PER_PAGE}
+              </td>
               <td className="px-4 py-3">
                 {row.cars.map((car) => car.licenseplate).join(", ").length > 15
                   ? row.cars
@@ -147,15 +176,17 @@ function ListVipTable() {
                       .slice(0, 15) + "..."
                   : row.cars.map((car) => car.licenseplate).join(", ")}
               </td>
-              <td className="px-4 py-3">{`${row.fname} ${row.lname}`}</td>
-              <td className="px-4 py-3">{row.tel}</td>
               <td className="px-4 py-3">
-                {new Date(row.expire_date).toLocaleDateString()}
+                {row.member ? `${row.member.fname} ${row.member.lname}` : ""}
+              </td>
+              <td className="px-4 py-3">{row.member?.tel || ""}</td>
+              <td className="px-4 py-3">
+                {new Date(row.vip_expiry_date).toLocaleDateString()}
               </td>
               <td className="px-4 py-3 text-center">
                 <button
                   onClick={() =>
-                    handleOpenCarRegisEdit(row.vip_member_id, row.cars)
+                    handleOpenCarRegisEdit(row.member_id, row.cars)
                   }
                 >
                   <FontAwesomeIcon icon={faCar} className="text-blue-500" />
@@ -163,7 +194,7 @@ function ListVipTable() {
               </td>
               <td className="px-4 py-3 text-center">
                 <button
-                  onClick={() => handleOpenVipEdit(row.vip_member_id, row)}
+                  onClick={() => handleOpenVipEdit(row.cars[0].car_id, row)}
                 >
                   <PencilSquareIcon className="w-5 h-5 text-primary" />
                 </button>
@@ -175,13 +206,19 @@ function ListVipTable() {
       <div className="flex justify-end items-center mt-4 gap-6">
         <p className="text-sm font-thin">{getCurrentRowRange()}</p>
         <div className="flex gap-3">
-          <button onClick={() => setPage((prev) => Math.max(prev - 1, 1))}>
+          <button
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+            disabled={page === 1}
+          >
             <ChevronLeftIcon className="w-4 h-4" />
           </button>
           <button
             onClick={() =>
-              setPage((prev) => Math.min(prev + 1, meta.totalPages))
+              setPage((prev) =>
+                Math.min(prev + 1, Math.ceil(total / ITEMS_PER_PAGE))
+              )
             }
+            disabled={page >= Math.ceil(total / ITEMS_PER_PAGE)}
           >
             <ChevronRightIcon className="w-4 h-4" />
           </button>
