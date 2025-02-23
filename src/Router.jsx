@@ -40,7 +40,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/receipt",
+    path: "/receipt/:id?",
     element: (
       <Suspense fallback={<SpinnerLoading />}>
         <ReceiptPage />
