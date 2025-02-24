@@ -1,25 +1,23 @@
-import {
-  ArrowDownTrayIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import React, { useRef, useEffect, useState } from "react";
 import receipt from "../../assets/Receipt.png";
 import { useParams } from "react-router-dom";
-import html2canvas from 'html2canvas';
+import html2canvas from "html2canvas";
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('th-TH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
+  return date.toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 };
 
 const formatTime = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleTimeString('th-TH', {
-    hour: '2-digit',
-    minute: '2-digit'
+  return date.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
@@ -33,13 +31,26 @@ function ReceiptPage() {
   useEffect(() => {
     const fetchPaymentData = async () => {
       try {
-        const response = await fetch(`/parking/lastestpaymenthistory/${licensePlate}`);
+        // Update the API URL to include the base URL from environment variable
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/parking/lastestpaymenthistory/${licensePlate}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
         if (!response.ok) {
-          throw new Error('Failed to fetch payment data');
+          throw new Error(
+            `Failed to fetch payment data: ${response.status} ${response.statusText}`
+          );
         }
+
         const data = await response.json();
         setPaymentData(data);
       } catch (err) {
+        console.error("Error fetching payment data:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -57,16 +68,16 @@ function ReceiptPage() {
         const canvas = await html2canvas(receiptRef.current);
         canvas.toBlob((blob) => {
           const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
+          const link = document.createElement("a");
           link.href = url;
-          link.download = `receipt-${new Date().getTime()}.png`;
+          link.download = `receipt-${licensePlate}-${new Date().getTime()}.png`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
         });
       } catch (error) {
-        console.error('Error downloading receipt:', error);
+        console.error("Error downloading receipt:", error);
       }
     }
   };
@@ -88,8 +99,10 @@ function ReceiptPage() {
   }
 
   // Calculate time limit for exit (1 hour after payment)
-  const exitTimeLimit = paymentData?.latestPayment?.paidAt 
-    ? new Date(new Date(paymentData.latestPayment.paidAt).getTime() + 60 * 60 * 1000)
+  const exitTimeLimit = paymentData?.latestPayment?.paidAt
+    ? new Date(
+        new Date(paymentData.latestPayment.paidAt).getTime() + 60 * 60 * 1000
+      )
     : null;
 
   return (
@@ -118,23 +131,43 @@ function ReceiptPage() {
               <div className="w-full border-[0.5px] border-gray-300"></div>
               <p className="text-xs w-ful space-y-1">
                 <p>เลขทะเบียน: {paymentData?.licensePlate}</p>
-                <p>เวลาเข้า: {formatDate(paymentData?.latestPayment?.entryTime)} {formatTime(paymentData?.latestPayment?.entryTime)}</p>
+                <p>
+                  เวลาเข้า: {formatDate(paymentData?.latestPayment?.entryTime)}{" "}
+                  {formatTime(paymentData?.latestPayment?.entryTime)}
+                </p>
                 {paymentData?.latestPayment?.exitTime && (
-                  <p>เวลาออก: {formatDate(paymentData?.latestPayment?.exitTime)} {formatTime(paymentData?.latestPayment?.exitTime)}</p>
+                  <p>
+                    เวลาออก: {formatDate(paymentData?.latestPayment?.exitTime)}{" "}
+                    {formatTime(paymentData?.latestPayment?.exitTime)}
+                  </p>
                 )}
                 <div className="flex justify-between">
                   <p>ค่าบริการ</p>
-                  <p>{parseFloat(paymentData?.latestPayment?.amount).toFixed(2)} บาท</p>
+                  <p>
+                    {parseFloat(paymentData?.latestPayment?.amount).toFixed(2)}{" "}
+                    บาท
+                  </p>
                 </div>
                 {paymentData?.latestPayment?.discount !== "0.00" && (
                   <div className="flex justify-between">
                     <p>ส่วนลด</p>
-                    <p>{parseFloat(paymentData?.latestPayment?.discount).toFixed(2)} บาท</p>
+                    <p>
+                      {parseFloat(paymentData?.latestPayment?.discount).toFixed(
+                        2
+                      )}{" "}
+                      บาท
+                    </p>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <p>ชำระเงิน</p>
-                  <p>{(parseFloat(paymentData?.latestPayment?.amount) - parseFloat(paymentData?.latestPayment?.discount)).toFixed(2)} บาท</p>
+                  <p>
+                    {(
+                      parseFloat(paymentData?.latestPayment?.amount) -
+                      parseFloat(paymentData?.latestPayment?.discount)
+                    ).toFixed(2)}{" "}
+                    บาท
+                  </p>
                 </div>
                 <div className="flex justify-between">
                   <p>วิธีการชำระเงิน</p>
@@ -144,7 +177,8 @@ function ReceiptPage() {
               <div className="w-full border-[0.5px] border-gray-300"></div>
               <div className="flex flex-col space-y-1">
                 <h2 className="text-md w-full flex justify-center">
-                  กรุณานำรถออกก่อนเวลา {exitTimeLimit ? formatTime(exitTimeLimit) : '-'}
+                  กรุณานำรถออกก่อนเวลา{" "}
+                  {exitTimeLimit ? formatTime(exitTimeLimit) : "-"}
                 </h2>
                 <h3 className="text-xs w-full flex justify-center text-gray-500">
                   หากเกินเวลาจะคิดค่าบริการเพิ่ม
@@ -156,7 +190,7 @@ function ReceiptPage() {
 
         <div className="w-full flex justify-center items-center mt-6">
           <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
-            <button 
+            <button
               className="rounded-2xl border-[0.5px] p-2 border-gray-300 w-8 h-8 flex justify-center items-center"
               onClick={handleDownload}
             >

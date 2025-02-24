@@ -27,6 +27,46 @@ function DetailPage() {
   const buttons = ["ทั้งหมด", "รถเข้า", "รถออก"];
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // Format time to 24-hour format with seconds
+  const formatTime = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("th-TH");
+  };
+
+  // Client-side sorting function
+  const sortData = (data) => {
+    return [...data].sort((a, b) => {
+      let compareA, compareB;
+
+      if (sortBy === "entryTime") {
+        compareA = new Date(a.entry_time).getTime();
+        compareB = new Date(b.entry_time).getTime();
+      } else if (sortBy === "exitTime") {
+        compareA = a.exit_time ? new Date(a.exit_time).getTime() : 0;
+        compareB = b.exit_time ? new Date(b.exit_time).getTime() : 0;
+      }
+
+      if (sortOrder === "ASC") {
+        return compareA - compareB;
+      } else {
+        return compareB - compareA;
+      }
+    });
+  };
+
   const getStatus = (row) => {
     if (selected === "รถเข้า") {
       return "กำลังจอด";
@@ -37,11 +77,9 @@ function DetailPage() {
     }
   };
 
-  const fetchAllRecords = async (currentPage, limit) => {
+  const fetchAllRecords = async () => {
     try {
-      const response = await fetch(
-        `${apiUrl}/parking/records?page=${currentPage}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`
-      );
+      const response = await fetch(`${apiUrl}/parking/records`);
       const result = await response.json();
       if (result.data) {
         const formattedData = result.data.map((record) => ({
@@ -60,73 +98,106 @@ function DetailPage() {
           entry_car_image_path: record.entry_car_image_path,
         }));
 
-        setData(formattedData);
-        setFilteredData(formattedData);
-        setTotalRows(result.pagination.total_entries);
-        setPageCount(Math.ceil(result.pagination.total_entries / limit));
+        const sortedData = sortData(formattedData);
+        setData(sortedData);
+        setFilteredData(sortedData);
+        setTotalRows(sortedData.length);
+        setPageCount(Math.ceil(sortedData.length / rowsPerPage));
       }
     } catch (error) {
       console.error("Error fetching all records:", error);
     }
   };
 
-  const fetchEntryRecords = async (currentPage, limit) => {
+  const fetchEntryRecords = async () => {
     try {
-      const response = await fetch(
-        `${apiUrl}/parking/entry-records?page=${currentPage}&limit=${limit}`
-      );
+      const response = await fetch(`${apiUrl}/parking/entry-records`);
       const result = await response.json();
       if (result.success) {
-        setData(result.data);
-        setFilteredData(result.data);
-        setTotalRows(result.total);
-        setPageCount(result.totalPages);
+        const sortedData = sortData(result.data);
+        setData(sortedData);
+        setFilteredData(sortedData);
+        setTotalRows(sortedData.length);
+        setPageCount(Math.ceil(sortedData.length / rowsPerPage));
       }
     } catch (error) {
       console.error("Error fetching entry records:", error);
     }
   };
 
-  const fetchExitRecords = async (currentPage, limit) => {
+  const fetchExitRecords = async () => {
     try {
-      const response = await fetch(
-        `${apiUrl}/parking/entry-exit-records?page=${currentPage}&limit=${limit}`
-      );
+      const response = await fetch(`${apiUrl}/parking/entry-exit-records`);
       const result = await response.json();
       if (result.success) {
-        setData(result.data);
-        setFilteredData(result.data);
-        setTotalRows(result.total);
-        setPageCount(result.totalPages);
+        const sortedData = sortData(result.data);
+        setData(sortedData);
+        setFilteredData(sortedData);
+        setTotalRows(sortedData.length);
+        setPageCount(Math.ceil(sortedData.length / rowsPerPage));
       }
     } catch (error) {
       console.error("Error fetching exit records:", error);
     }
   };
 
+  // Effect for sorting
+  useEffect(() => {
+    const sortedData = sortData(filteredData);
+    setFilteredData(sortedData);
+  }, [sortBy, sortOrder]);
+
+  // Effect for fetching data based on selected tab
   useEffect(() => {
     switch (selected) {
       case "รถเข้า":
-        fetchEntryRecords(page, rowsPerPage);
+        fetchEntryRecords();
         break;
       case "รถออก":
-        fetchExitRecords(page, rowsPerPage);
+        fetchExitRecords();
         break;
       default:
-        fetchAllRecords(page, rowsPerPage);
+        fetchAllRecords();
     }
-  }, [page, rowsPerPage, selected, sortBy, sortOrder]);
+  }, [selected]);
 
+  // Effect for search filtering
   useEffect(() => {
-    if (searchQuery === "") {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((row) =>
+    let filtered = data;
+    if (searchQuery !== "") {
+      filtered = data.filter((row) =>
         row.car.license_plate.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredData(filtered);
     }
-  }, [searchQuery, data]);
+    const sortedAndFiltered = sortData(filtered);
+    setFilteredData(sortedAndFiltered);
+    setPageCount(Math.ceil(sortedAndFiltered.length / rowsPerPage));
+
+    // Reset to page 1 if current page would be empty
+    const maxPage = Math.ceil(sortedAndFiltered.length / rowsPerPage);
+    if (page > maxPage) {
+      setPage(1);
+    }
+  }, [searchQuery, data, rowsPerPage]);
+
+  // Effect for updating pageCount when rowsPerPage changes
+  useEffect(() => {
+    setPageCount(Math.ceil(filteredData.length / rowsPerPage));
+    // Reset to page 1 if current page would be empty
+    const maxPage = Math.ceil(filteredData.length / rowsPerPage);
+    if (page > maxPage) {
+      setPage(1);
+    }
+  }, [rowsPerPage, filteredData.length]);
+
+  const handleSelectChange = (btn) => {
+    setSelected(btn);
+    setPage(1);
+    if (btn === "รถเข้า") {
+      setSortBy("entryTime");
+      setSortOrder("DESC");
+    }
+  };
 
   const handleRowClick = (index) => {
     setSelectedRow(filteredData[index]);
@@ -139,9 +210,7 @@ function DetailPage() {
   };
 
   const getCurrentRowRange = () => {
-    const startRange = (page - 1) * rowsPerPage + 1;
-    const endRange = Math.min(page * rowsPerPage, totalRows);
-    return `${startRange}-${endRange} of ${totalRows}`;
+    return `หน้า ${page} จาก ${pageCount}`;
   };
 
   const handleRowsPerPageChange = (event) => {
@@ -151,6 +220,14 @@ function DetailPage() {
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
+    setPage(1);
+  };
+
+  // Get current rows for display
+  const getCurrentPageData = () => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredData.slice(start, end);
   };
 
   return (
@@ -190,96 +267,105 @@ function DetailPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            {filteredData.slice(0, 7).map((record, index) => (
-              <div
-                key={index}
-                className="h-[110px] w-[130px] bg-gray-100 rounded overflow-hidden relative"
-              >
-                {record.entry_car_image_path ? (
-                  <img
-                    src={`${apiUrl}${record.entry_car_image_path}`}
-                    alt={`Car ${record.car.license_plate}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = "/placeholder-car.jpg";
-                      e.target.className =
-                        "w-full h-full object-contain bg-gray-200";
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                    <span className="text-gray-500">No Image</span>
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1">
-                  {record.car.license_plate}
-                </div>
-              </div>
-            ))}
-            {filteredData.length >= 8 && (
-              <div className="grid grid-cols-2 grid-rows-2 gap-4 h-[110px] w-[130px]">
-                {[filteredData[7]].map((record, i) => (
-                  <div
-                    key={i}
-                    className="bg-gray-100 overflow-hidden h-[47px] w-[61px] relative"
-                  >
-                    {record.entry_car_image_path ? (
-                      <img
-                        src={`${apiUrl}${record.entry_car_image_path}`}
-                        alt={`Car ${record.car.license_plate}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = "/placeholder-car.jpg";
-                          e.target.className =
-                            "w-full h-full object-contain bg-gray-200";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                        <span className="text-gray-500 text-[8px]">
-                          No Image
-                        </span>
-                      </div>
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] p-0.5">
-                      {record.car.license_plate}
+            {filteredData
+              .slice((page - 1) * rowsPerPage, page * rowsPerPage)
+              .map((record, index) => (
+                <div
+                  key={index}
+                  className="h-[110px] w-[130px] bg-gray-100 rounded-[8px] overflow-hidden relative"
+                >
+                  {record.entry_car_image_path ? (
+                    <img
+                      src={`${apiUrl}${record.entry_car_image_path}`}
+                      alt={`Car ${record.car.license_plate}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = "/placeholder-car.jpg";
+                        e.target.className =
+                          "w-full h-full object-contain bg-gray-200";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                      <span className="text-gray-500">No Image</span>
                     </div>
+                  )}
+                  <div
+                    className="absolute w-[85px] text-center bottom-0 left-0 text-white text-xs p-1 rounded-tr-xl"
+                    style={{ backgroundColor: "#007AFF" }}
+                  >
+                    {record.car.license_plate}
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
           </div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              {selected === "ทั้งหมด" && (
-                <>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-4 py-2 border rounded"
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  disabled={selected === "รถเข้า"}
+                  className={`px-4 pr-8 appearance-none py-2 border rounded-[8px] h-[40px] ${
+                    selected === "รถเข้า"
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  <option value="entryTime">เรียงตามเวลาเข้า</option>
+                  <option value="exitTime">เรียงตามเวลาออก</option>
+                </select>
+                <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className={`w-4 h-4 ${
+                      selected === "รถเข้า" ? "text-gray-300" : ""
+                    }`}
                   >
-                    <option value="entryTime">เรียงตามเวลาเข้า</option>
-                    <option value="exitTime">เรียงตามเวลาออก</option>
-                  </select>
-                  <select
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="px-4 py-2 border rounded"
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
+              <div className="relative">
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="px-4 pr-8 appearance-none py-2 border rounded-[8px] h-[40px]"
+                >
+                  <option value="DESC">มากไปน้อย</option>
+                  <option value="ASC">น้อยไปมาก</option>
+                </select>
+                <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-4 h-4"
                   >
-                    <option value="DESC">มากไปน้อย</option>
-                    <option value="ASC">น้อยไปมาก</option>
-                  </select>
-                </>
-              )}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
             </div>
-            <div className="flex gap-5">
+            <div className="flex gap-4">
               {buttons.map((btn) => (
                 <button
                   key={btn}
-                  onClick={() => {
-                    setSelected(btn);
-                    setPage(1);
-                  }}
+                  onClick={() => handleSelectChange(btn)}
                   className={`px-4 py-2 border border-[#007AFF]/15 text-[#007AFF] rounded-[8px] w-[87px] h-[40px] font-sm ${
                     selected === btn ? "bg-[#007AFF]/15" : "bg-white"
                   }`}
@@ -300,8 +386,8 @@ function DetailPage() {
                   "วันที่เข้า",
                   "เวลาเข้า",
                   "เวลาออก",
-                  "ระยะเวลา",
-                  "ค่าบริการ",
+                  "ระยะเวลา (ชม.)",
+                  "ค่าบริการ (บาท)",
                   "สถานะ",
                 ].map((header) => (
                   <th
@@ -324,32 +410,29 @@ function DetailPage() {
                   </td>
                 </tr>
               ) : (
-                filteredData.map((row, index) => {
+                getCurrentPageData().map((row, index) => {
                   const serialNumber = (page - 1) * rowsPerPage + index + 1;
-                  const entryDateTime = new Date(row.entry_time);
                   return (
                     <tr
                       key={index}
-                      onClick={() => handleRowClick(index)}
+                      onClick={() =>
+                        handleRowClick((page - 1) * rowsPerPage + index)
+                      }
                       className="border-b hover:bg-blue-50 cursor-pointer"
                     >
                       <td className="px-4 py-3">{serialNumber}</td>
                       <td className="px-4 py-3">{row.car.license_plate}</td>
                       <td className="px-4 py-3">
-                        {entryDateTime.toLocaleDateString()}
+                        {formatDate(row.entry_time)}
                       </td>
                       <td className="px-4 py-3">
-                        {entryDateTime.toLocaleTimeString()}
+                        {formatTime(row.entry_time)}
                       </td>
+                      <td className="px-4 py-3">{formatTime(row.exit_time)}</td>
                       <td className="px-4 py-3">
-                        {row.exit_time
-                          ? new Date(row.exit_time).toLocaleTimeString()
-                          : "-"}
+                        {row.parkedHours ? `${row.parkedHours}` : "-"}
                       </td>
-                      <td className="px-4 py-3">
-                        {row.parkedHours ? `${row.parkedHours} ชม.` : "-"}
-                      </td>
-                      <td className="px-4 py-3">{row.parkingFee} บาท</td>
+                      <td className="px-4 py-3">{row.parkingFee}</td>
                       <td className="px-4 py-3">{getStatus(row)}</td>
                     </tr>
                   );
@@ -362,32 +445,54 @@ function DetailPage() {
           {filteredData.length > 0 && (
             <>
               <div className="flex items-center gap-1">
-                <p className="text-sm text-gray-500">รายการต่อหน้า :</p>
-                <select
-                  value={rowsPerPage}
-                  onChange={handleRowsPerPageChange}
-                  className="text-sm py-1 px-2 border border-gray-300 rounded-md"
-                >
-                  {[5, 10, 15, 20].map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                <p className="text-sm ">รายการต่อหน้า :</p>
+                <div className="relative">
+                  <select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    className="text-sm py-1 appearance-none px-2 border border-gray-300 rounded-md w-[50px]"
+                  >
+                    {[5, 10, 15, 20].map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute top-1/2 right-1 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </span>
+                </div>
               </div>
-              <p className="text-sm text-gray-500">{getCurrentRowRange()}</p>
+              <p className="text-sm ">{getCurrentRowRange()}</p>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() =>
-                    setPage((prev) => (prev > 1 ? prev - 1 : pageCount))
+                    setPage((prev) => (prev > 1 ? prev - 1 : prev))
                   }
+                  disabled={page === 1}
+                  className={page === 1 ? "text-gray-300" : ""}
                 >
                   <ChevronLeftIcon className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() =>
-                    setPage((prev) => (prev < pageCount ? prev + 1 : 1))
+                    setPage((prev) => (prev < pageCount ? prev + 1 : prev))
                   }
+                  disabled={page === pageCount}
+                  className={page === pageCount ? "text-gray-300" : ""}
                 >
                   <ChevronRightIcon className="w-4 h-4" />
                 </button>

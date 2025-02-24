@@ -38,31 +38,8 @@ function ListVipTable() {
       );
       const result = await response.json();
       if (result.data) {
-        // Group data by member_id to combine multiple car entries
-        const groupedData = result.data.reduce((acc, item) => {
-          const memberId = item.member?.member_id;
-          if (!acc[memberId]) {
-            acc[memberId] = {
-              member_id: memberId,
-              vip_expiry_date: item.vip_expiry_date,
-              cars: [],
-              member: item.member
-                ? {
-                    fname: item.member.f_name,
-                    lname: item.member.l_name,
-                    tel: item.member.phone,
-                  }
-                : null,
-            };
-          }
-          acc[memberId].cars.push({
-            car_id: item.car_id,
-            licenseplate: item.license_plate,
-          });
-          return acc;
-        }, {});
-
-        setVipData(Object.values(groupedData));
+        // No grouping needed, just use the data as-is
+        setVipData(result.data);
         setTotal(result.total);
       }
     } catch (error) {
@@ -86,9 +63,9 @@ function ListVipTable() {
     handleCloseCarRegis();
   };
 
-  const handleOpenCarRegisEdit = (memberId, cars) => {
-    setVipId(memberId);
-    setCarData(cars);
+  const handleOpenCarRegisEdit = (carId, licensePlate) => {
+    setVipId(carId);
+    setCarData([{ car_id: carId, licenseplate: licensePlate }]);
     setIsCarRegisEditOpen(true);
   };
 
@@ -96,29 +73,33 @@ function ListVipTable() {
     setIsCarRegisEditOpen(false);
   };
 
-  const handleOpenVipEdit = (carId, currentData) => {
+  const handleOpenVipEdit = (carId, data) => {
     setVipId(carId);
     setFormData({
       car_id: carId,
-      fname: currentData.member?.fname || "",
-      lname: currentData.member?.lname || "",
-      tel: currentData.member?.tel || "",
+      fname: data.member?.f_name || "",
+      lname: data.member?.l_name || "",
+      tel: data.member?.phone || "",
       extend_days: "0",
     });
     setIsVipEditOpen(true);
   };
 
-  const getCurrentRowRange = () => {
-    const startRange = (page - 1) * ITEMS_PER_PAGE + 1;
-    const endRange = Math.min(page * ITEMS_PER_PAGE, total);
-    return `${startRange}-${endRange} of ${total}`;
+  // ฟังก์ชันสำหรับแสดงหน้าปัจจุบันและหน้าทั้งหมด
+  const getCurrentPageDisplay = () => {
+    const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+    return `หน้า ${page} จาก ${totalPages}`;
   };
+
+  // เช็คว่าปุ่มเลื่อนหน้าถูก disable หรือไม่
+  const isPrevButtonDisabled = page === 1;
+  const isNextButtonDisabled = page >= Math.ceil(total / ITEMS_PER_PAGE);
 
   return (
     <>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">รายการสมาชิก VIP</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-4">
           <button
             className="bg-primary rounded-lg px-7 py-2 text-white"
             onClick={() => handleOpenForm()}
@@ -162,40 +143,31 @@ function ListVipTable() {
         <tbody>
           {vipData.map((row, index) => (
             <tr
-              key={row.member_id || index}
+              key={row.car_id}
               className="border-b text-black text-sm font-thin"
             >
               <td className="px-4 py-3">
                 {index + 1 + (page - 1) * ITEMS_PER_PAGE}
               </td>
+              <td className="px-4 py-3">{row.license_plate}</td>
               <td className="px-4 py-3">
-                {row.cars.map((car) => car.licenseplate).join(", ").length > 15
-                  ? row.cars
-                      .map((car) => car.licenseplate)
-                      .join(", ")
-                      .slice(0, 15) + "..."
-                  : row.cars.map((car) => car.licenseplate).join(", ")}
+                {row.member ? `${row.member.f_name} ${row.member.l_name}` : ""}
               </td>
-              <td className="px-4 py-3">
-                {row.member ? `${row.member.fname} ${row.member.lname}` : ""}
-              </td>
-              <td className="px-4 py-3">{row.member?.tel || ""}</td>
+              <td className="px-4 py-3">{row.member?.phone || ""}</td>
               <td className="px-4 py-3">
                 {new Date(row.vip_expiry_date).toLocaleDateString()}
               </td>
               <td className="px-4 py-3 text-center">
                 <button
                   onClick={() =>
-                    handleOpenCarRegisEdit(row.member_id, row.cars)
+                    handleOpenCarRegisEdit(row.car_id, row.license_plate)
                   }
                 >
                   <FontAwesomeIcon icon={faCar} className="text-blue-500" />
                 </button>
               </td>
               <td className="px-4 py-3 text-center">
-                <button
-                  onClick={() => handleOpenVipEdit(row.cars[0].car_id, row)}
-                >
+                <button onClick={() => handleOpenVipEdit(row.car_id, row)}>
                   <PencilSquareIcon className="w-5 h-5 text-primary" />
                 </button>
               </td>
@@ -204,11 +176,12 @@ function ListVipTable() {
         </tbody>
       </table>
       <div className="flex justify-end items-center mt-4 gap-6">
-        <p className="text-sm font-thin">{getCurrentRowRange()}</p>
+        <p className="text-sm font-thin">{getCurrentPageDisplay()}</p>
         <div className="flex gap-3">
           <button
             onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-            disabled={page === 1}
+            disabled={isPrevButtonDisabled}
+            className={isPrevButtonDisabled ? "text-gray-400" : ""}
           >
             <ChevronLeftIcon className="w-4 h-4" />
           </button>
@@ -218,7 +191,8 @@ function ListVipTable() {
                 Math.min(prev + 1, Math.ceil(total / ITEMS_PER_PAGE))
               )
             }
-            disabled={page >= Math.ceil(total / ITEMS_PER_PAGE)}
+            disabled={isNextButtonDisabled}
+            className={isNextButtonDisabled ? "text-gray-400" : ""}
           >
             <ChevronRightIcon className="w-4 h-4" />
           </button>
@@ -228,6 +202,7 @@ function ListVipTable() {
         isOpen={isFormOpen}
         handleClose={handleCloseForm}
         vipId={vipId}
+        fetchVipData={fetchVipData}
       />
       <CarRegisModal
         isOpen={isCarRegisOpen}
@@ -235,6 +210,7 @@ function ListVipTable() {
         onSubmit={handleCarRegister}
         formData={formData}
         setFormData={setFormData}
+        fetchVipData={fetchVipData}
       />
       <VipEditModal
         isOpen={isVipEditOpen}
@@ -249,6 +225,7 @@ function ListVipTable() {
         vipId={vipId}
         carData={carData}
         setCarData={setCarData}
+        fetchVipData={fetchVipData}
       />
     </>
   );

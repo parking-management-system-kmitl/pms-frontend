@@ -15,7 +15,7 @@ function LlistManageFeeTable() {
   });
   const [isEditingCondition, setIsEditingCondition] = useState(false);
 
-  // Add these new state variables at the top with other useState declarations
+  // Parking options state variables
   const [parkingOptions, setParkingOptions] = useState({
     parking_option_id: "",
     note_description: "",
@@ -24,77 +24,11 @@ function LlistManageFeeTable() {
     overflow_hour_rate: 0,
   });
 
-  const [tempCondition, setTempCondition] = useState(parkingOptions.note_description);
+  const [tempCondition, setTempCondition] = useState(
+    parkingOptions.note_description
+  );
 
-  // Add this new useEffect for fetching parking options
-  useEffect(() => {
-    const fetchParkingOptions = async () => {
-      const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/options`;
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        if (data.status === 200) {
-          // แปลงค่าที่ต้องการเป็นจำนวนเต็ม
-          const updatedData = {
-            ...data.data,
-            minute_rounding_threshold: parseInt(data.data.minute_rounding_threshold, 10),
-            exit_buffer_time: parseInt(data.data.exit_buffer_time, 10),
-            overflow_hour_rate: parseInt(data.data.overflow_hour_rate, 10),
-          };
-  
-          setParkingOptions(updatedData);
-          setTempCondition(data.data.note_description);
-        }
-      } catch (error) {
-        console.error("Error fetching parking options:", error);
-      }
-    };
-  
-    fetchParkingOptions();
-  }, []);
-  
-
-  // Add this new function to handle the update of parking options
-  const handleUpdateParkingOptions = async () => {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/options/${parkingOptions.parking_option_id}`;
-    const requestBody = {
-      note_description: tempCondition, // ใช้ tempCondition แทน newFeeCondition
-      minute_rounding_threshold: parseInt(tempMinuteRounding, 10),
-      exit_buffer_time: parseInt(tempExitBuffer, 10),
-      overflow_hour_rate: parseInt(tempOverflowRate, 10),
-    };
-  
-    try {
-      const response = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-  
-      const data = await response.json();
-      if (data.status === 200) {
-        const updatedData = {
-          ...data.data,
-          minute_rounding_threshold: parseInt(data.data.minute_rounding_threshold, 10),
-          exit_buffer_time: parseInt(data.data.exit_buffer_time, 10),
-          overflow_hour_rate: parseInt(data.data.overflow_hour_rate, 10),
-        };
-  
-        setParkingOptions(updatedData);
-        setTempCondition(data.data.note_description); // อัปเดต tempCondition
-        setIsEditingCondition(false);
-      } else {
-        console.error("Failed to update parking options:", data.message);
-      }
-    } catch (error) {
-      console.error("Error updating parking options:", error);
-    }
-  };
-  
-
-  // Add these new state variables for temporary values
+  // Temporary state variables
   const [tempMinuteRounding, setTempMinuteRounding] = useState("");
   const [tempExitBuffer, setTempExitBuffer] = useState("");
   const [tempOverflowRate, setTempOverflowRate] = useState("");
@@ -105,7 +39,39 @@ function LlistManageFeeTable() {
     rate_at_hour: "",
   });
 
-  // Fetch data from the API
+  // Modified: Changed items per page from 10 to 5
+  const itemsPerPage = 5;
+
+  // Fetch parking options data
+  useEffect(() => {
+    const fetchParkingOptions = async () => {
+      const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/options`;
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        if (data.status === 200) {
+          const updatedData = {
+            ...data.data,
+            minute_rounding_threshold: parseInt(
+              data.data.minute_rounding_threshold,
+              10
+            ),
+            exit_buffer_time: parseInt(data.data.exit_buffer_time, 10),
+            overflow_hour_rate: parseInt(data.data.overflow_hour_rate, 10),
+          };
+
+          setParkingOptions(updatedData);
+          setTempCondition(data.data.note_description);
+        }
+      } catch (error) {
+        console.error("Error fetching parking options:", error);
+      }
+    };
+
+    fetchParkingOptions();
+  }, []);
+
+  // Fetch parking rates data
   useEffect(() => {
     const fetchParkingRates = async () => {
       const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/rates`;
@@ -123,13 +89,53 @@ function LlistManageFeeTable() {
     fetchParkingRates();
   }, []);
 
-  const getCurrentRowRange = () => {
-    const startRange = (page - 1) * 10 + 1;
-    const endRange = Math.min(page * 10, parkingRates.length);
-    return `${startRange}-${endRange} of ${parkingRates.length}`;
+  const getPaginationText = () => {
+    const totalPages = Math.ceil(parkingRates.length / itemsPerPage);
+    return `หน้า ${page} จาก ${totalPages}`;
   };
 
-  const pageCount = Math.ceil(parkingRates.length / 10);
+  const pageCount = Math.ceil(parkingRates.length / itemsPerPage);
+
+  const handleUpdateParkingOptions = async () => {
+    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/options/${parkingOptions.parking_option_id}`;
+    const requestBody = {
+      note_description: tempCondition,
+      minute_rounding_threshold: parseInt(tempMinuteRounding, 10),
+      exit_buffer_time: parseInt(tempExitBuffer, 10),
+      overflow_hour_rate: parseInt(tempOverflowRate, 10),
+    };
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+      if (data.status === 200) {
+        const updatedData = {
+          ...data.data,
+          minute_rounding_threshold: parseInt(
+            data.data.minute_rounding_threshold,
+            10
+          ),
+          exit_buffer_time: parseInt(data.data.exit_buffer_time, 10),
+          overflow_hour_rate: parseInt(data.data.overflow_hour_rate, 10),
+        };
+
+        setParkingOptions(updatedData);
+        setTempCondition(data.data.note_description);
+        setIsEditingCondition(false);
+      } else {
+        console.error("Failed to update parking options:", data.message);
+      }
+    } catch (error) {
+      console.error("Error updating parking options:", error);
+    }
+  };
 
   const handleEditClick = (row) => {
     setEditData({
@@ -210,6 +216,11 @@ function LlistManageFeeTable() {
           (rate) => rate.hours !== hours
         );
         setParkingRates(updatedRates);
+
+        const newPageCount = Math.ceil(updatedRates.length / itemsPerPage);
+        if (page > newPageCount && newPageCount > 0) {
+          setPage(newPageCount);
+        }
       } else {
         console.error("Failed to delete parking rate:", data.message);
       }
@@ -239,7 +250,7 @@ function LlistManageFeeTable() {
                   <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
                 </button>
               </div>
-              <h2 className="text-3xl font-medium mb-4">เงื่อนไขต่างๆ</h2>
+              <h2 className="text-3xl font-medium mb-4">เงื่อนไขค่าจอดรถ</h2>
               <div className="flex justify-between gap-6 mb-2">
                 <div className="mb-4 w-full">
                   <label className="block text-sm font-medium mb-1">
@@ -372,29 +383,31 @@ function LlistManageFeeTable() {
             <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
               อัตราค่าบริการ (บาท/ชั่วโมง)
             </th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-right text-black text-sm font-bold">
-              แก้ไข/ลบข้อมูล
+            <th className="border-b bg-blue-200 px-4 py-3 text-right text-black text-sm font-bold pr-7">
+              การจัดการ
             </th>
           </tr>
         </thead>
         <tbody className="overflow-auto">
-          {parkingRates.slice((page - 1) * 10, page * 10).map((row) => (
-            <tr
-              key={row.hours}
-              className="border-b text-black text-sm font-thin"
-            >
-              <td className="px-4 py-3">{row.hours}</td>
-              <td className="px-4 py-3">{row.rate_at_hour}</td>
-              <td className="flex px-4 py-3 justify-end gap-5 pr-8">
-                <button onClick={() => handleEditClick(row)}>
-                  <PencilSquareIcon className="w-5 h-5 text-primary" />
-                </button>
-                <button onClick={() => handleDeleteClick(row.hours)}>
-                  <TrashIcon className="w-5 h-5 text-red-500" />
-                </button>
-              </td>
-            </tr>
-          ))}
+          {parkingRates
+            .slice((page - 1) * itemsPerPage, page * itemsPerPage)
+            .map((row) => (
+              <tr
+                key={row.hours}
+                className="border-b text-black text-sm font-thin"
+              >
+                <td className="px-4 py-3">{row.hours}</td>
+                <td className="px-4 py-3">{row.rate_at_hour}</td>
+                <td className="flex px-4 py-3 justify-end gap-5 pr-8">
+                  <button onClick={() => handleEditClick(row)}>
+                    <PencilSquareIcon className="w-5 h-5 text-primary" />
+                  </button>
+                  <button onClick={() => handleDeleteClick(row.hours)}>
+                    <TrashIcon className="w-5 h-5 text-red-500" />
+                  </button>
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
 
@@ -407,7 +420,7 @@ function LlistManageFeeTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-medium mb-4">รายละเอียดค่าจอดรถ</h2>
+            <h2 className="text-3xl font-medium mb-4">จัดการอัตราค่าบริการจอดรถ</h2>
             <div className="mb-4 w-full">
               <label className="block text-sm font-medium mb-1">
                 ชั่วโมงที่จอด (ชม.)
@@ -460,7 +473,7 @@ function LlistManageFeeTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-medium mb-4">รายละเอียดค่าจอดรถ</h2>
+            <h2 className="text-3xl font-medium mb-4">เพิ่มค่าจอดรถ</h2>
             <div className="mb-4">
               <label htmlFor="hours" className="block text-sm font-medium mb-1">
                 ชั่วโมงที่จอด (ชม.)
@@ -517,19 +530,19 @@ function LlistManageFeeTable() {
       )}
 
       <div className="flex justify-end items-center mt-4 gap-6">
-        <p className="text-sm font-thin">{getCurrentRowRange()}</p>
+        <p className="text-sm font-thin">{getPaginationText()}</p>
         <div className="flex gap-3">
           <button
-            onClick={() =>
-              setPage((prev) => (prev === 1 ? pageCount : prev - 1))
-            }
+            onClick={() => setPage((prev) => prev - 1)}
+            disabled={page === 1}
+            className={page === 1 ? "text-gray-400 " : "text-black"}
           >
             <ChevronLeftIcon className="w-4 h-4" />
           </button>
           <button
-            onClick={() =>
-              setPage((prev) => (prev === pageCount ? 1 : prev + 1))
-            }
+            onClick={() => setPage((prev) => prev + 1)}
+            disabled={page === pageCount}
+            className={page === pageCount ? "text-gray-400 " : "text-black"}
           >
             <ChevronRightIcon className="w-4 h-4" />
           </button>

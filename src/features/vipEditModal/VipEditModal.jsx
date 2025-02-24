@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { XCircleIcon } from "@heroicons/react/24/outline";
-import vip from "../../assets/VIP.png";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 
 const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
   const [statusMessage, setStatusMessage] = useState(null);
@@ -56,7 +55,7 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-8 rounded-lg w-[779px]">
-        <div className="w-full flex justify-end">
+        <div className="w-full flex justify-end mb-6">
           <button onClick={closePopup}>
             <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
           </button>
@@ -74,9 +73,8 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
           </div>
         ) : (
           <>
-            <div className="w-full flex flex-col justify-center items-center mb-6">
-              <img src={vip} alt="vip" className="w-[180px] h-[180px]" />
-              <h2 className="text-3xl font-bold">แก้ไขข้อมูลสมาชิก VIP</h2>
+            <div className="w-full flex flex-col justify-center mb-6">
+              <h2 className="text-3xl font-bold">จัดการสมาชิก VIP</h2>
             </div>
 
             <div className="space-y-4">
@@ -125,7 +123,7 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
 
                 <div className="w-full">
                   <label className="block text-gray-700 mb-2">
-                    จำนวนวันต่ออายุ VIP
+                    ต่ออายุ VIP (วัน)
                   </label>
                   <input
                     type="number"
@@ -140,12 +138,18 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 gap-4 flex justify-end">
               <button
-                className="bg-primary px-4 py-2 text-white rounded-lg"
+                className="bg-gray-200 px-4 py-2 text-black rounded-lg w-[150px] h-[49px]"
+                onClick={closePopup}
+              >
+                ยกเลิก
+              </button>
+              <button
+                className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
                 onClick={handleSubmit}
               >
-                บันทึกการแก้ไข
+                บันทึก
               </button>
             </div>
           </>

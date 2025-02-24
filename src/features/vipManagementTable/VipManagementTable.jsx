@@ -25,6 +25,8 @@ function VIPPromotionsTable() {
     price: "",
   });
 
+  const itemsPerPage = 5;
+
   useEffect(() => {
     fetchPromotions();
   }, []);
@@ -67,7 +69,7 @@ function VIPPromotionsTable() {
         },
       });
       if (response.ok) {
-        await fetchPromotions(); // Refresh the list to get updated status
+        await fetchPromotions();
       } else {
         console.error("Failed to toggle promotion status");
       }
@@ -152,23 +154,22 @@ function VIPPromotionsTable() {
     }
   };
 
-  const getCurrentRowRange = () => {
-    const startRange = (page - 1) * 10 + 1;
-    const endRange = Math.min(page * 10, promotions.length);
-    return `${startRange}-${endRange} of ${promotions.length}`;
+  const getPageInfo = () => {
+    const pageCount = Math.ceil(promotions.length / itemsPerPage);
+    return `หน้า ${page} จาก ${pageCount}`;
   };
 
-  const pageCount = Math.ceil(promotions.length / 10);
+  const pageCount = Math.ceil(promotions.length / itemsPerPage);
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">จัดการโปรโมชั่น VIP</h1>
+        <h1 className="text-3xl font-bold">จัดการโปรโมชัน VIP</h1>
         <button
           className="bg-primary rounded-lg px-7 py-2 text-white"
           onClick={() => setShowAddPopup(true)}
         >
-          เพิ่มโปรโมชั่น
+          เพิ่มโปรโมชัน
         </button>
       </div>
 
@@ -196,49 +197,69 @@ function VIPPromotionsTable() {
               </tr>
             </thead>
             <tbody className="overflow-auto">
-              {promotions.slice((page - 1) * 10, page * 10).map((promotion) => (
-                <tr
-                  key={promotion.vip_promotion_id}
-                  className="border-b text-black text-sm font-thin"
-                >
-                  <td className="px-4 py-3">{promotion.days}</td>
-                  <td className="px-4 py-3">
-                    {Number(promotion.price).toLocaleString()}
-                  </td>
-                  <td className="px-3 py-3">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={promotion.isActive}
-                        onChange={() => handleToggleStatus(promotion.vip_promotion_id)}
-                        className="toggle-checkbox"
-                      />
-                      <span className="toggle-slider"></span>
-                    </label>
-                  </td>
-                  <td className="flex px-4 py-3 justify-end gap-5 pr-8">
-                    <button onClick={() => handleEditClick(promotion)}>
-                      <PencilSquareIcon className="w-5 h-5 text-primary" />
-                    </button>
-                    <button onClick={() => handleDeleteClick(promotion.vip_promotion_id)}>
-                      <TrashIcon className="w-5 h-5 text-red-500" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {promotions
+                .slice((page - 1) * itemsPerPage, page * itemsPerPage)
+                .map((promotion) => (
+                  <tr
+                    key={promotion.vip_promotion_id}
+                    className="border-b text-black text-sm font-thin"
+                  >
+                    <td className="px-4 py-3">{promotion.days}</td>
+                    <td className="px-4 py-3">
+                      {Number(promotion.price).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={promotion.isActive}
+                          onChange={() =>
+                            handleToggleStatus(promotion.vip_promotion_id)
+                          }
+                          className="toggle-checkbox"
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </td>
+                    <td className="flex px-4 py-3 justify-end gap-5 pr-8">
+                      <button onClick={() => handleEditClick(promotion)}>
+                        <PencilSquareIcon className="w-5 h-5 text-primary" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDeleteClick(promotion.vip_promotion_id)
+                        }
+                      >
+                        <TrashIcon className="w-5 h-5 text-red-500" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
 
           <div className="flex justify-end items-center mt-4 gap-6">
-            <p className="text-sm font-thin">{getCurrentRowRange()}</p>
+            <p className="text-sm font-thin">{getPageInfo()}</p>
             <div className="flex gap-3">
               <button
-                onClick={() => setPage((prev) => (prev === 1 ? pageCount : prev - 1))}
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className={`transition-colors duration-200 ${
+                  page === 1
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-black hover:text-primary"
+                }`}
               >
                 <ChevronLeftIcon className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setPage((prev) => (prev === pageCount ? 1 : prev + 1))}
+                onClick={() => setPage((prev) => Math.min(prev + 1, pageCount))}
+                disabled={page === pageCount}
+                className={`transition-colors duration-200 ${
+                  page === pageCount
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-black hover:text-primary"
+                }`}
               >
                 <ChevronRightIcon className="w-4 h-4" />
               </button>
@@ -256,7 +277,7 @@ function VIPPromotionsTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-medium mb-4">แก้ไขโปรโมชั่น VIP</h2>
+            <h2 className="text-3xl font-medium mb-4">จัดการโปรโมชัน VIP</h2>
             <div className="mb-4">
               <label htmlFor="days" className="block text-sm font-medium mb-1">
                 ระยะเวลา (วัน)
@@ -265,7 +286,9 @@ function VIPPromotionsTable() {
                 type="number"
                 id="days"
                 value={editData.days}
-                onChange={(e) => setEditData({ ...editData, days: e.target.value })}
+                onChange={(e) =>
+                  setEditData({ ...editData, days: e.target.value })
+                }
                 className="border border-gray-300 rounded p-2 w-full"
               />
             </div>
@@ -277,7 +300,9 @@ function VIPPromotionsTable() {
                 type="number"
                 id="price"
                 value={editData.price}
-                onChange={(e) => setEditData({ ...editData, price: e.target.value })}
+                onChange={(e) =>
+                  setEditData({ ...editData, price: e.target.value })
+                }
                 className="border border-gray-300 rounded p-2 w-full"
               />
             </div>
@@ -308,7 +333,7 @@ function VIPPromotionsTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-medium mb-4">เพิ่มโปรโมชั่น VIP</h2>
+            <h2 className="text-3xl font-medium mb-4">เพิ่มโปรโมชัน VIP</h2>
             <div className="mb-4">
               <label htmlFor="days" className="block text-sm font-medium mb-1">
                 ระยะเวลา (วัน)
@@ -317,7 +342,9 @@ function VIPPromotionsTable() {
                 type="number"
                 id="days"
                 value={newPromotion.days}
-                onChange={(e) => setNewPromotion({ ...newPromotion, days: e.target.value })}
+                onChange={(e) =>
+                  setNewPromotion({ ...newPromotion, days: e.target.value })
+                }
                 className="border border-gray-300 rounded p-2 w-full"
               />
             </div>
@@ -329,7 +356,9 @@ function VIPPromotionsTable() {
                 type="number"
                 id="price"
                 value={newPromotion.price}
-                onChange={(e) => setNewPromotion({ ...newPromotion, price: e.target.value })}
+                onChange={(e) =>
+                  setNewPromotion({ ...newPromotion, price: e.target.value })
+                }
                 className="border border-gray-300 rounded p-2 w-full"
               />
             </div>
@@ -344,7 +373,7 @@ function VIPPromotionsTable() {
                 onClick={handleAddPromotion}
                 className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
               >
-                เพิ่ม
+                บันทึก
               </button>
             </div>
           </div>

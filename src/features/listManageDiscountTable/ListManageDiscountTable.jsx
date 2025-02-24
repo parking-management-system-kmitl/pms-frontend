@@ -11,8 +11,11 @@ function ListManageDiscountTable() {
   const [error, setError] = useState("");
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showAddPopup, setShowAddPopup] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false); // New state for delete confirmation
-  const [deleteData, setDeleteData] = useState(null); // Store discount id to delete
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [deleteData, setDeleteData] = useState(null);
+
+  // Items per page changed from 10 to 5
+  const itemsPerPage = 5;
 
   const [editData, setEditData] = useState({
     id: "",
@@ -42,10 +45,10 @@ function ListManageDiscountTable() {
 
   const [newDiscount, setNewDiscount] = useState({
     title: "",
-    customer_type: "GENERAL", // Changed from number to string
+    customer_type: "GENERAL",
     min_purchase: "",
     max_purchase: "",
-    free_hours: "", // Changed from hours_granted
+    free_hours: "",
     is_active: true,
   });
 
@@ -76,13 +79,18 @@ function ListManageDiscountTable() {
     fetchDiscounts();
   }, []);
 
-  const getCurrentRowRange = () => {
-    const startRange = (page - 1) * 10 + 1;
-    const endRange = Math.min(page * 10, discounts.length);
-    return `${startRange}-${endRange} of ${discounts.length}`;
+  // Modified to show page X of Y pages
+  const getPageDisplay = () => {
+    const totalPages = Math.ceil(discounts.length / itemsPerPage);
+    return `หน้า ${page} จาก ${totalPages}`;
   };
 
-  const pageCount = Math.ceil(discounts.length / 10);
+  // Updated page count calculation for 5 items per page
+  const pageCount = Math.ceil(discounts.length / itemsPerPage);
+  
+  // Check if we're on the first or last page for disabling buttons
+  const isFirstPage = page === 1;
+  const isLastPage = page === pageCount || pageCount === 0;
 
   const handleToggleStatus = async (discountId) => {
     const discount = discounts.find((d) => d.discount_id === discountId);
@@ -149,7 +157,6 @@ function ListManageDiscountTable() {
   const handleAddDiscount = async () => {
     const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/discounts`;
 
-    // ข้อมูลที่จะส่งไป
     const requestBody = {
       title: newDiscount.title,
       customer_type: newDiscount.customer_type,
@@ -159,7 +166,6 @@ function ListManageDiscountTable() {
       is_active: true,
     };
 
-    // แสดงข้อมูลที่จะส่งไปใน console
     console.log("Data to be sent:", requestBody);
 
     try {
@@ -168,11 +174,11 @@ function ListManageDiscountTable() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody), // ส่งข้อมูลไปยัง API
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
-      console.log("Response from server:", data); // แสดงข้อมูลที่ได้รับกลับมาจากเซิร์ฟเวอร์
+      console.log("Response from server:", data);
 
       if (data.status === 201) {
         setDiscounts([...discounts, data.data]);
@@ -263,7 +269,8 @@ function ListManageDiscountTable() {
               </tr>
             </thead>
             <tbody className="overflow-auto">
-              {discounts.slice((page - 1) * 10, page * 10).map((discount) => (
+              {/* Changed from 10 to itemsPerPage (5) */}
+              {discounts.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((discount) => (
                 <tr
                   key={discount.discount_id}
                   className="border-b text-black text-sm font-thin"
@@ -313,19 +320,20 @@ function ListManageDiscountTable() {
           </table>
 
           <div className="flex justify-end items-center mt-4 gap-6">
-            <p className="text-sm font-thin">{getCurrentRowRange()}</p>
+            {/* Changed to show page X of Y format */}
+            <p className="text-sm font-thin">{getPageDisplay()}</p>
             <div className="flex gap-3">
               <button
-                onClick={() =>
-                  setPage((prev) => (prev === 1 ? pageCount : prev - 1))
-                }
+                onClick={() => !isFirstPage && setPage((prev) => prev - 1)}
+                disabled={isFirstPage}
+                className={`${isFirstPage ? 'text-gray-400 cursor-not-allowed' : 'text-black cursor-pointer'}`}
               >
                 <ChevronLeftIcon className="w-4 h-4" />
               </button>
               <button
-                onClick={() =>
-                  setPage((prev) => (prev === pageCount ? 1 : prev + 1))
-                }
+                onClick={() => !isLastPage && setPage((prev) => prev + 1)}
+                disabled={isLastPage}
+                className={`${isLastPage ? 'text-gray-400 cursor-not-allowed' : 'text-black cursor-pointer'}`}
               >
                 <ChevronRightIcon className="w-4 h-4" />
               </button>
@@ -343,7 +351,7 @@ function ListManageDiscountTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-medium mb-4">รายละเอียดส่วนลด</h2>
+            <h2 className="text-3xl font-medium mb-4">จัดการส่วนลด</h2>
             <div className="mb-4">
               <label htmlFor="title" className="block text-sm font-medium mb-1">
                 รายการ
@@ -420,7 +428,6 @@ function ListManageDiscountTable() {
                 />
               </div>
             </div>
-            {/* Rest of the form remains the same */}
             <div className="mb-4">
               <label
                 htmlFor="min_purchase"
@@ -520,7 +527,7 @@ function ListManageDiscountTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-medium mb-4">รายละเอียดส่วนลด</h2>
+            <h2 className="text-3xl font-medium mb-4">เพิ่มส่วนลด</h2>
             <div className="mb-4">
               <label htmlFor="title" className="block text-sm font-medium mb-1">
                 รายการ
@@ -644,7 +651,7 @@ function ListManageDiscountTable() {
                 onClick={handleAddDiscount}
                 className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
               >
-                เพิ่ม
+                บันทึก
               </button>
             </div>
           </div>
