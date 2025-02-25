@@ -26,7 +26,7 @@ const schema = yup
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
-function VipFormModal({ isOpen, handleClose, vipId }) {
+function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
   const [showNextModal, setShowNextModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -97,12 +97,16 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
 
       if (linkResponse.data.message === "Car linked successfully") {
         setSuccessMessage("สมัครสมาชิกและลงทะเบียนรถสำเร็จ!");
+        
+        // รีเฟรชข้อมูลในตาราง
         setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+          if (typeof fetchVipData === 'function') {
+            fetchVipData(1); // กลับไปหน้าแรกหลังลงทะเบียนสำเร็จ
+          }
+          setShowNextModal(false);
+          setSuccessMessage("");
+        }, 2000);
       }
-
-      setShowNextModal(false);
     } catch (error) {
       console.error("Error during car linking:", error);
       if (error.response?.status === 409) {
@@ -122,7 +126,7 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
       {isOpen && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-lg w-[779px]">
-            <div className="w-full flex justify-end">
+            <div className="w-full flex justify-end w-[150px] h-[49px]">
               <button onClick={handleClose}>
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
@@ -212,7 +216,7 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
 
               <div className="mt-6 flex gap-4 justify-end">
                 <button
-                  className="bg-gray-400 px-4 py-2 text-white rounded-lg"
+                  className="bg-gray-200 px-4 py-2 text-black rounded-lg w-[150px] h-[49px]"
                   onClick={handleClose}
                   type="button"
                 >
@@ -220,8 +224,8 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
                 </button>
                 <button
                   type="submit"
-                  className={`px-4 py-2 text-white rounded-lg ${
-                    isDirty ? "bg-primary" : "bg-gray-400"
+                  className={`px-4 py-2 text-white rounded-lg w-[150px] h-[49px] ${
+                    isDirty ? "bg-primary" : "bg-gray-200"
                   }`}
                   disabled={!isDirty}
                 >
@@ -270,13 +274,13 @@ function VipFormModal({ isOpen, handleClose, vipId }) {
 
             <div className="mt-6 flex gap-4 justify-end">
               <button
-                className="bg-gray-400 px-4 py-2 text-white rounded-lg"
+                className="bg-gray-200 px-4 py-2 text-black rounded-lg w-[150px] h-[49px]"
                 onClick={closeNextModal}
               >
                 ยกเลิก
               </button>
               <button
-                className="bg-primary px-4 py-2 text-white rounded-lg"
+                className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
                 onClick={handleRegister}
               >
                 สมัครสมาชิก

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 
 function CarDetailModal({
   isVisible,
@@ -54,22 +55,23 @@ function CarDetailModal({
 
   const handleApplyDiscount = async () => {
     if (!selectedDiscount || !carId || isApplyingDiscount) return;
-  
+
     const selectedDiscountObj = discounts.find(
-      (discount) => discount.discount_id.toString() === selectedDiscount.toString()
+      (discount) =>
+        discount.discount_id.toString() === selectedDiscount.toString()
     );
-  
+
     if (!selectedDiscountObj) {
       setError("Invalid discount selection");
       return;
     }
-  
+
     setIsApplyingDiscount(true);
     setError(null);
-  
+
     try {
-      console.log(carId)
-      console.log(selectedDiscountObj.discount_id)
+      console.log(carId);
+      console.log(selectedDiscountObj.discount_id);
       const response = await fetch(`${apiUrl}/discount/apply`, {
         method: "POST",
         headers: {
@@ -80,13 +82,13 @@ function CarDetailModal({
           discount_id: selectedDiscountObj.discount_id,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to apply discount");
       }
-  
+
       const data = await response.json();
-  
+
       if (data.status === "success") {
         onClose();
       } else {
@@ -194,13 +196,12 @@ function CarDetailModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-2xl shadow-lg w-[850px] h-[600px] relative">
-        <span
-          className="absolute top-3 right-5 text-2xl cursor-pointer"
-          onClick={onClose}
-        >
-          &times;
-        </span>
-        <div className="flex flex-row mt-6">
+        <div className="w-full flex justify-end">
+          <button onClick={onClose}>
+            <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
+          </button>
+        </div>
+        <div className="flex flex-row">
           {/* Left Section */}
           <div className="w-1/2 mr-5 ml-4">
             <h1 className="font-inter text-blue-500 text-lg font-semibold">
@@ -209,9 +210,6 @@ function CarDetailModal({
                 year: "numeric",
                 month: "long",
                 day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
               })}
             </h1>
             <div className="mt-3 h-[250px] w-full bg-gray-100 rounded-lg overflow-hidden">

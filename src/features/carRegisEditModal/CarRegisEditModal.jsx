@@ -1,14 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { XCircleIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 
-const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
+const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData, fetchVipData }) => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [statusType, setStatusType] = useState("");
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [selectedCar, setSelectedCar] = useState(null);
-  const [newLicensePlate, setNewLicensePlate] = useState("");
-  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
+  const [licensePlates, setLicensePlates] = useState({});
+
+  // Initialize licensePlates when modal opens with new car data
+  useEffect(() => {
+    if (isOpen && carData.length > 0) {
+      const initialLicensePlates = {};
+      carData.forEach((car) => {
+        initialLicensePlates[car.car_id] = car.licenseplate;
+      });
+      setLicensePlates(initialLicensePlates);
+    }
+  }, [isOpen, carData]);
 
   if (!isOpen) return null;
 
@@ -21,14 +30,20 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
       });
 
       if (response.data.success) {
-        // Update local state to remove the unlinked car
         setCarData((prevData) =>
           prevData.filter((car) => car.car_id !== carId)
         );
+        
+        if (fetchVipData) {
+          fetchVipData(1);
+        }
+        handleClose();
         setStatusMessage("ยกเลิกการเชื่อมต่อรถสำเร็จ!");
         setStatusType("success");
+        
+        // Close the modal after successful deletion
         setTimeout(() => {
-          window.location.reload();
+          onClose();
         }, 1000);
       }
     } catch (error) {
@@ -37,7 +52,16 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
     }
   };
 
-  const handleEditCar = async () => {
+  const handleChangeLicensePlate = (carId, value) => {
+    setLicensePlates({
+      ...licensePlates,
+      [carId]: value,
+    });
+  };
+
+  const handleUpdateLicensePlate = async (car) => {
+    const newLicensePlate = licensePlates[car.car_id];
+
     if (!newLicensePlate) {
       setStatusMessage("กรุณากรอกป้ายทะเบียนใหม่");
       setStatusType("error");
@@ -45,30 +69,27 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
     }
 
     try {
-      const response = await axios.put(
-        `${apiUrl}/vip/updatelp/${selectedCar.car_id}`,
-        {
-          license_plate: newLicensePlate,
-        }
-      );
+      const response = await axios.put(`${apiUrl}/vip/updatelp/${car.car_id}`, {
+        license_plate: newLicensePlate,
+      });
 
       if (response.status === 200) {
         // Update the local state with the new license plate
         setCarData((prevData) =>
-          prevData.map((car) =>
-            car.car_id === selectedCar.car_id
-              ? { ...car, licenseplate: newLicensePlate }
-              : car
+          prevData.map((c) =>
+            c.car_id === car.car_id
+              ? { ...c, licenseplate: newLicensePlate }
+              : c
           )
         );
-        setStatusMessage("แก้ไขทะเบียนรถสำเร็จ!");
-        setStatusType("success");
-        setEditModalOpen(false);
-        setSelectedCar(null);
-        setNewLicensePlate("");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        
+        // Fetch updated data using the fetchVipData function from ListVipTable
+        if (fetchVipData) {
+          fetchVipData(1); // Refresh data from the first page or current page
+        }
+        
+        // Close the modal after successful update
+        onClose();
       }
     } catch (error) {
       setStatusMessage("ไม่สามารถแก้ไขทะเบียนรถได้");
@@ -91,122 +112,62 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData }) => {
           </button>
         </div>
 
-        {statusMessage ? (
-          <div
-            className={`p-4 rounded-lg ${
-              statusType === "success"
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
+        {statusMessage && statusType === "error" ? (
+          <div className="p-4 rounded-lg bg-red-100 text-red-700">
             {statusMessage}
           </div>
         ) : (
           <>
-            <h2 className="text-3xl font-bold mb-6">จัดการทะเบียนรถ</h2>
+            <h2 className="text-3xl font-bold mb-6">จัดการป้ายทะเบียน</h2>
 
             <div className="space-y-4">
-              {carData.length > 0 ? (
-                carData.map((car) => (
-                  <div
-                    key={car.car_id}
-                    className="flex justify-between items-center border-b py-3"
-                  >
-                    <span>{car.licenseplate}</span>
-                    <div className="flex gap-6">
+              {carData.map((car) => (
+                <div key={car.car_id}>
+                  <div className="w-full mb-4">
+                    <label className="block text-gray-700 mb-2">
+                      เลขทะเบียน
+                    </label>
+                    <input
+                      type="text"
+                      value={licensePlates[car.car_id] || ""}
+                      onChange={(e) =>
+                        handleChangeLicensePlate(car.car_id, e.target.value)
+                      }
+                      placeholder="กรอกป้ายทะเบียน"
+                      className="w-full border p-2 rounded"
+                    />
+                  </div>
+                  <div className="flex mt-3 justify-between gap-4">
+                    <div
+                      className="flex justify-center items-center gap-2 cursor-pointer"
+                      onClick={() => handleDeleteCar(car.car_id)}
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                      <h2 className="text-black text-center">
+                        ยกเลิกสมาชิก VIP
+                      </h2>
+                    </div>
+                    <div className="flex gap-4">
                       <button
-                        className="text-blue-500"
-                        onClick={() => {
-                          setSelectedCar(car);
-                          setEditModalOpen(true);
-                        }}
+                        className="bg-gray-200 px-4 py-2 rounded-lg w-[150px] h-[49px]"
+                        onClick={handleClose}
                       >
-                        แก้ไข
+                        ยกเลิก
                       </button>
                       <button
-                        className="text-red-500"
-                        onClick={() => {
-                          setSelectedCar(car);
-                          setConfirmDeleteModalOpen(true);
-                        }}
+                        className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
+                        onClick={() => handleUpdateLicensePlate(car)}
                       >
-                        ลบ
+                        บันทึก
                       </button>
                     </div>
                   </div>
-                ))
-              ) : (
-                <p>ไม่มีทะเบียนรถ</p>
-              )}
+                </div>
+              ))}
             </div>
           </>
         )}
       </div>
-
-      {/* Edit License Plate Modal */}
-      {editModalOpen && selectedCar && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg w-[400px]">
-            <h3 className="text-xl font-bold mb-4">แก้ไขทะเบียนรถ</h3>
-            <div className="space-y-4">
-              <p>ทะเบียนเดิม: {selectedCar.licenseplate}</p>
-              <input
-                type="text"
-                value={newLicensePlate}
-                onChange={(e) => setNewLicensePlate(e.target.value)}
-                className="w-full p-2 border rounded"
-                placeholder="กรอกป้ายทะเบียนใหม่"
-              />
-            </div>
-            <div className="mt-6 flex justify-end space-x-4">
-              <button
-                className="bg-gray-300 px-4 py-2 rounded-lg"
-                onClick={() => setEditModalOpen(false)}
-              >
-                ยกเลิก
-              </button>
-              <button
-                className="bg-primary px-4 py-2 text-white rounded-lg"
-                onClick={handleEditCar}
-              >
-                ตกลง
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {confirmDeleteModalOpen && selectedCar && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg w-[400px]">
-            <h3 className="text-xl font-bold mb-4">
-              ยืนยันการยกเลิกการเชื่อมต่อรถ
-            </h3>
-            <p>
-              คุณต้องการยกเลิกการเชื่อมต่อรถทะเบียน {selectedCar.licenseplate}{" "}
-              หรือไม่?
-            </p>
-            <div className="mt-6 flex justify-end space-x-4">
-              <button
-                className="bg-gray-300 px-4 py-2 rounded-lg"
-                onClick={() => setConfirmDeleteModalOpen(false)}
-              >
-                ยกเลิก
-              </button>
-              <button
-                className="bg-red-500 px-4 py-2 text-white rounded-lg"
-                onClick={() => {
-                  handleDeleteCar(selectedCar.car_id);
-                  setConfirmDeleteModalOpen(false);
-                }}
-              >
-                ตกลง
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,7 +1,5 @@
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import React, { useState, useEffect } from "react";
-import ThaiQR from "../../assets/ThaiQR.png";
-import PromptPay from "../../assets/PromptPay.png";
 import { useNavigate, useParams } from "react-router-dom";
 
 function PayingPage() {
@@ -91,7 +89,8 @@ function PayingPage() {
             
             const result = await response.json();
             if (result.success) {
-                navigate("/receipt");
+                // Navigate to receipt page with the license plate id parameter
+                navigate(`/receipt/${id}`);
             } else {
                 // Handle unsuccessful payment verification
                 alert("การชำระเงินยังไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
@@ -128,9 +127,7 @@ function PayingPage() {
 
                 <div className="pl-6 pr-6">
                     <div className="border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-auto items-center">
-                        <div className="flex justify-center items-center h-[57px] w-full rounded-tr-[20px] rounded-tl-[20px] bg-[#113E68]">
-                            <img src={ThaiQR} alt="thai_qr" className="w-[100px]" />
-                        </div>
+
                         <div className="flex flex-col justify-center items-center h-auto w-full rounded-[20px] p-6 space-y-3 bg-white">
                             {paymentData?.qrCodeUrl && (
                                 <img 
