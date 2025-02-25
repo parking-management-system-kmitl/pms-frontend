@@ -70,8 +70,6 @@ function CarDetailModal({
     setError(null);
 
     try {
-      console.log(carId);
-      console.log(selectedDiscountObj.discount_id);
       const response = await fetch(`${apiUrl}/discount/apply`, {
         method: "POST",
         headers: {
@@ -89,7 +87,7 @@ function CarDetailModal({
 
       const data = await response.json();
 
-      if (data.status === "success") {
+      if (data.payment_id) {
         onClose();
       } else {
         throw new Error("Discount application failed");
@@ -117,55 +115,76 @@ function CarDetailModal({
   const getData = () => {
     switch (rowType) {
       case "entry":
+        const entryPayment = selectedRow.payments?.[0] ||
+          selectedRow.payment || {
+            amount: "0.00",
+            discount: "0.00",
+            paid_at: null,
+          };
+
         return {
           licensePlate: selectedRow.car.license_plate,
           entryTime: new Date(selectedRow.entry_time).toLocaleTimeString(),
           exitTime: "-",
           parkedHours: selectedRow.parkedHours || 0,
-          fee: selectedRow.parkingFee,
+          fee: selectedRow.parkingFee || "0.00",
           isVIP: selectedRow.isVip,
           image: selectedRow.entry_car_image_path,
-          payment: selectedRow.payments?.[0] ||
-            selectedRow.payment || {
-              amount: "0.00",
-              discount: "0.00",
-              paid_at: null,
-            },
+          payment: entryPayment,
           date: selectedRow.entry_time,
           status: "กำลังจอด",
         };
       case "exit":
+        // แก้ไขตรงนี้ - สร้าง payment object ที่สมบูรณ์
+        const exitPayment = selectedRow.payments?.[0] || {
+          amount: "0.00",
+          discount: "0.00",
+          paid_at: null,
+        };
+
         return {
           licensePlate: selectedRow.car.license_plate,
           entryTime: new Date(selectedRow.entry_time).toLocaleTimeString(),
           exitTime: new Date(selectedRow.exit_time).toLocaleTimeString(),
           parkedHours: selectedRow.parkedHours || 0,
-          fee: selectedRow.parkingFee,
+          fee: selectedRow.parkingFee || "0.00",
           isVIP: selectedRow.isVip,
           image: selectedRow.entry_car_image_path,
-          payment: selectedRow.payments?.[0] || {
-            amount: "0.00",
-            discount: "0.00",
-            paid_at: null,
-          },
+          payment: exitPayment,
           date: selectedRow.entry_time,
           status: "ออกแล้ว",
         };
       default:
-        return {};
+        return {
+          licensePlate: "",
+          entryTime: "",
+          exitTime: "",
+          parkedHours: 0,
+          fee: "0.00",
+          isVIP: false,
+          image: "",
+          payment: {
+            amount: "0.00",
+            discount: "0.00",
+            paid_at: null,
+          },
+          date: new Date(),
+          status: "",
+        };
     }
   };
 
   const data = getData();
 
   const formatCurrency = (amount) => {
-    return parseFloat(amount).toFixed(2);
+    // เพิ่มการตรวจสอบว่า amount เป็น null หรือ undefined
+    return parseFloat(amount || 0).toFixed(2);
   };
 
   const calculatePaidAmount = (payment) => {
-    if (!payment.paid_at) return "0.00";
-    const amount = parseFloat(payment.amount) || 0;
-    const discount = parseFloat(payment.discount) || 0;
+    if (!payment || !payment.paid_at) return "0.00";
+    const amount = parseFloat(payment.amount || 0);
+    const discount = parseFloat(payment.discount || 0);
     return formatCurrency(amount - discount);
   };
 
@@ -301,7 +320,7 @@ function CarDetailModal({
             </p>
             <p className="font-inter text-sm mb-1 mt-3 flex justify-between text-gray-500">
               ส่วนลด:{" "}
-              <span>{formatCurrency(data.payment.discount || 0)} บาท</span>
+              <span>{formatCurrency(data.payment?.discount || 0)} บาท</span>
             </p>
             <p className="font-inter text-sm mb-3 mt-3 flex justify-between text-gray-500">
               ชำระแล้ว: <span>{calculatePaidAmount(data.payment)} บาท</span>
