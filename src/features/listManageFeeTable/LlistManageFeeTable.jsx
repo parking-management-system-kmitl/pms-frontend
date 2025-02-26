@@ -235,7 +235,7 @@ function LlistManageFeeTable() {
         <h1 className="text-3xl font-bold">จัดการอัตราค่าบริการจอดรถ</h1>
         <button
           onClick={handleAddClick}
-          className="bg-primary rounded-lg px-7 py-2 text-white"
+          className="bg-primary rounded-lg px-7 py-2 text-white w-[216px]"
         >
           เพิ่มค่าจอดรถ
         </button>

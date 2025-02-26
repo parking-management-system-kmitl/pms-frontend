@@ -19,32 +19,65 @@ function ListVipTable() {
   const [isVipEditOpen, setIsVipEditOpen] = useState(false);
   const [carData, setCarData] = useState([]);
   const [isCarRegisEditOpen, setIsCarRegisEditOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetchVipData(page);
-  }, [page]);
+    fetchVipData();
+  }, [page, searchQuery]);
 
-  const fetchVipData = async (currentPage) => {
+  const fetchVipData = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(
-        `${apiUrl}/vip/getvip?page=${currentPage}&limit=${ITEMS_PER_PAGE}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      let response;
+
+      // Determine if we should use search endpoint based on searchQuery
+      const isSearching = searchQuery && searchQuery.trim().length > 0;
+
+      if (isSearching) {
+        // Use search API endpoint
+        response = await fetch(`${apiUrl}/vip/search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            licensePlate: searchQuery,
+            page,
+            limit: ITEMS_PER_PAGE,
+          }),
+        });
+      } else {
+        // Use regular endpoint
+        response = await fetch(
+          `${apiUrl}/vip/getvip?page=${page}&limit=${ITEMS_PER_PAGE}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
       const result = await response.json();
+
       if (result.data) {
-        // No grouping needed, just use the data as-is
         setVipData(result.data);
         setTotal(result.total);
       }
     } catch (error) {
       console.error("Error fetching VIP data:", error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearchQuery(value);
+    setPage(1);
   };
 
   const handleOpenForm = (memberId = null) => {
@@ -97,9 +130,39 @@ function ListVipTable() {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">รายการสมาชิก VIP</h1>
-        <div className="flex gap-4">
+      <div className="flex flex-col gap-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">รายการสมาชิก VIP</h1>
+          <div className="flex items-center px-4 gap-4 bg-blue-100 text-gray-600 rounded-full w-1/3 h-12">
+            <svg
+              id="lens"
+              className="w-6 h-6"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 20"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+              />
+            </svg>
+            <input
+              type="text"
+              id="carname"
+              name="carname"
+              placeholder="ค้นหาป้ายทะเบียน"
+              className="bg-transparent outline-none w-full text-gray-600 placeholder-gray-600"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-4">
           <button
             className="bg-primary rounded-lg px-7 py-2 text-white"
             onClick={() => handleOpenForm()}
@@ -114,90 +177,151 @@ function ListVipTable() {
           </button>
         </div>
       </div>
-      <table className="table-auto w-full border-collapse">
-        <thead>
-          <tr className="bg-blue-100">
-            <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
-              ลำดับที่
-            </th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
-              ทะเบียนรถ
-            </th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
-              ชื่อ-นามสกุล
-            </th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
-              เบอร์โทร
-            </th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
-              วันหมดอายุ
-            </th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-center text-black text-sm font-bold">
-              จัดการป้ายทะเบียน
-            </th>
-            <th className="border-b bg-blue-200 px-4 py-3 text-center text-black text-sm font-bold">
-              จัดการสมาชิก
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {vipData.map((row, index) => (
-            <tr
-              key={row.car_id}
-              className="border-b text-black text-sm font-thin"
-            >
-              <td className="px-4 py-3">
-                {index + 1 + (page - 1) * ITEMS_PER_PAGE}
-              </td>
-              <td className="px-4 py-3">{row.license_plate}</td>
-              <td className="px-4 py-3">
-                {row.member ? `${row.member.f_name} ${row.member.l_name}` : ""}
-              </td>
-              <td className="px-4 py-3">{row.member?.phone || ""}</td>
-              <td className="px-4 py-3">
-                {new Date(row.vip_expiry_date).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-3 text-center">
-                <button
-                  onClick={() =>
-                    handleOpenCarRegisEdit(row.car_id, row.license_plate)
-                  }
-                >
-                  <FontAwesomeIcon icon={faCar} className="text-blue-500" />
-                </button>
-              </td>
-              <td className="px-4 py-3 text-center">
-                <button onClick={() => handleOpenVipEdit(row.car_id, row)}>
-                  <PencilSquareIcon className="w-5 h-5 text-primary" />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="flex justify-end items-center mt-4 gap-6">
-        <p className="text-sm font-thin">{getCurrentPageDisplay()}</p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-            disabled={isPrevButtonDisabled}
-            className={isPrevButtonDisabled ? "text-gray-400" : ""}
-          >
-            <ChevronLeftIcon className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() =>
-              setPage((prev) =>
-                Math.min(prev + 1, Math.ceil(total / ITEMS_PER_PAGE))
-              )
-            }
-            disabled={isNextButtonDisabled}
-            className={isNextButtonDisabled ? "text-gray-400" : ""}
-          >
-            <ChevronRightIcon className="w-4 h-4" />
-          </button>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
+      ) : (
+        <table className="table-auto w-full border-collapse mt-6">
+          <thead>
+            <tr className="bg-blue-100">
+              <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
+                ลำดับที่
+              </th>
+              <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
+                ทะเบียนรถ
+              </th>
+              <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
+                ชื่อ-นามสกุล
+              </th>
+              <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
+                เบอร์โทร
+              </th>
+              <th className="border-b bg-blue-200 px-4 py-3 text-left text-black text-sm font-bold">
+                วันหมดอายุ
+              </th>
+              <th className="border-b bg-blue-200 px-4 py-3 text-center text-black text-sm font-bold">
+                จัดการป้ายทะเบียน
+              </th>
+              <th className="border-b bg-blue-200 px-4 py-3 text-center text-black text-sm font-bold">
+                จัดการสมาชิก
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {vipData.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="7"
+                  className="text-3xl px-4 py-[6rem] text-center text-gray-400"
+                >
+                  {searchQuery ? "ไม่พบป้ายทะเบียนที่ค้นหา" : "ไม่มีข้อมูล"}
+                </td>
+              </tr>
+            ) : (
+              vipData.map((row, index) => (
+                <tr
+                  key={row.car_id}
+                  className="border-b text-black text-sm font-thin hover:bg-blue-50"
+                >
+                  <td className="px-4 py-3">
+                    {index + 1 + (page - 1) * ITEMS_PER_PAGE}
+                  </td>
+                  <td className="px-4 py-3">{row.license_plate}</td>
+                  <td className="px-4 py-3">
+                    {row.member
+                      ? `${row.member.f_name} ${row.member.l_name}`
+                      : ""}
+                  </td>
+                  <td className="px-4 py-3">{row.member?.phone || ""}</td>
+                  <td className="px-4 py-3">
+                    {new Date(row.vip_expiry_date).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() =>
+                        handleOpenCarRegisEdit(row.car_id, row.license_plate)
+                      }
+                    >
+                      <FontAwesomeIcon icon={faCar} className="text-blue-500" />
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => handleOpenVipEdit(row.car_id, row)}>
+                      <PencilSquareIcon className="w-5 h-5 text-primary" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      )}
+
+      <div className="flex justify-end items-center mt-4 gap-6">
+        {vipData.length > 0 && (
+          <>
+            <div className="flex items-center gap-1">
+              <p className="text-sm">รายการต่อหน้า :</p>
+              <div className="relative">
+                <select
+                  value={ITEMS_PER_PAGE}
+                  onChange={(e) => {
+                    // This would need a proper implementation to change items per page
+                    console.log("Items per page changed:", e.target.value);
+                  }}
+                  className="text-sm py-1 appearance-none px-2 border border-gray-300 rounded-md w-[50px]"
+                >
+                  {[5, 10, 15, 20].map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute top-1/2 right-1 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <p className="text-sm">{getCurrentPageDisplay()}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={isPrevButtonDisabled}
+                className={isPrevButtonDisabled ? "text-gray-400" : ""}
+              >
+                <ChevronLeftIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() =>
+                  setPage((prev) =>
+                    Math.min(prev + 1, Math.ceil(total / ITEMS_PER_PAGE))
+                  )
+                }
+                disabled={isNextButtonDisabled}
+                className={isNextButtonDisabled ? "text-gray-400" : ""}
+              >
+                <ChevronRightIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        )}
       </div>
+
       <VipFormModal
         isOpen={isFormOpen}
         handleClose={handleCloseForm}

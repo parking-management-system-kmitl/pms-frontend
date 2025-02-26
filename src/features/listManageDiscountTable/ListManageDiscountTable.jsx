@@ -23,7 +23,7 @@ function ListManageDiscountTable() {
     min_purchase: "",
     max_purchase: "",
     free_hours: "",
-    customer_type: "REGULAR",
+    customer_type: "VIP",
     is_active: true,
   });
 
@@ -87,7 +87,7 @@ function ListManageDiscountTable() {
 
   // Updated page count calculation for 5 items per page
   const pageCount = Math.ceil(discounts.length / itemsPerPage);
-  
+
   // Check if we're on the first or last page for disabling buttons
   const isFirstPage = page === 1;
   const isLastPage = page === pageCount || pageCount === 0;
@@ -185,7 +185,7 @@ function ListManageDiscountTable() {
         setShowAddPopup(false);
         setNewDiscount({
           title: "",
-          customer_type: "REGULAR",
+          customer_type: "VIP",
           min_purchase: "",
           max_purchase: "",
           free_hours: "",
@@ -232,7 +232,7 @@ function ListManageDiscountTable() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">จัดการส่วนลด</h1>
         <button
-          className="bg-primary rounded-lg px-7 py-2 text-white"
+          className="bg-primary rounded-lg px-7 py-2 text-white w-[216px]"
           onClick={() => setShowAddPopup(true)}
         >
           เพิ่มส่วนลด
@@ -270,52 +270,54 @@ function ListManageDiscountTable() {
             </thead>
             <tbody className="overflow-auto">
               {/* Changed from 10 to itemsPerPage (5) */}
-              {discounts.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((discount) => (
-                <tr
-                  key={discount.discount_id}
-                  className="border-b text-black text-sm font-thin"
-                >
-                  <td className="px-4 py-3">{discount.title}</td>
-                  <td className="px-4 py-3">
-                    {discount.min_purchase.toLocaleString()} -{" "}
-                    {discount.max_purchase.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3">{discount.free_hours}</td>
-                  <td className="px-4 py-3">
-                    {discount.customer_type === "VIP"
-                      ? "VIP"
-                      : discount.customer_type === "GENERAL"
-                      ? "ทั่วไป"
-                      : "ทั้งหมด"}
-                  </td>
-                  <td className="px-3 py-3">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <span className="mr-2 text-sm font-medium">
-                        {discount.is_active ? "" : ""}
-                      </span>
-                      <input
-                        type="checkbox"
-                        checked={discount.is_active}
-                        onChange={() =>
-                          handleToggleStatus(discount.discount_id)
-                        }
-                        className="toggle-checkbox"
-                      />
-                      <span className="toggle-slider"></span>
-                    </label>
-                  </td>
-                  <td className="flex px-4 py-3 justify-end gap-5 pr-8">
-                    <button onClick={() => handleEditClick(discount)}>
-                      <PencilSquareIcon className="w-5 h-5 text-primary" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(discount.discount_id)}
-                    >
-                      <TrashIcon className="w-5 h-5 text-red-500" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {discounts
+                .slice((page - 1) * itemsPerPage, page * itemsPerPage)
+                .map((discount) => (
+                  <tr
+                    key={discount.discount_id}
+                    className="border-b text-black text-sm font-thin"
+                  >
+                    <td className="px-4 py-3">{discount.title}</td>
+                    <td className="px-4 py-3">
+                      {discount.min_purchase.toLocaleString()} -{" "}
+                      {discount.max_purchase.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3">{discount.free_hours}</td>
+                    <td className="px-4 py-3">
+                      {discount.customer_type === "VIP"
+                        ? "VIP"
+                        : discount.customer_type === "GENERAL"
+                        ? "ทั่วไป"
+                        : "ทั้งหมด"}
+                    </td>
+                    <td className="px-3 py-3">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <span className="mr-2 text-sm font-medium">
+                          {discount.is_active ? "" : ""}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={discount.is_active}
+                          onChange={() =>
+                            handleToggleStatus(discount.discount_id)
+                          }
+                          className="toggle-checkbox"
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </td>
+                    <td className="flex px-4 py-3 justify-end gap-5 pr-8">
+                      <button onClick={() => handleEditClick(discount)}>
+                        <PencilSquareIcon className="w-5 h-5 text-primary" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(discount.discount_id)}
+                      >
+                        <TrashIcon className="w-5 h-5 text-red-500" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
 
@@ -326,14 +328,22 @@ function ListManageDiscountTable() {
               <button
                 onClick={() => !isFirstPage && setPage((prev) => prev - 1)}
                 disabled={isFirstPage}
-                className={`${isFirstPage ? 'text-gray-400 cursor-not-allowed' : 'text-black cursor-pointer'}`}
+                className={`${
+                  isFirstPage
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-black cursor-pointer"
+                }`}
               >
                 <ChevronLeftIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={() => !isLastPage && setPage((prev) => prev + 1)}
                 disabled={isLastPage}
-                className={`${isLastPage ? 'text-gray-400 cursor-not-allowed' : 'text-black cursor-pointer'}`}
+                className={`${
+                  isLastPage
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-black cursor-pointer"
+                }`}
               >
                 <ChevronRightIcon className="w-4 h-4" />
               </button>

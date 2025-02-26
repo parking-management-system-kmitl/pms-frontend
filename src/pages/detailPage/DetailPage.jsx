@@ -16,13 +16,13 @@ function DetailPage() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedDiscount, setSelectedDiscount] = useState("");
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [totalRows, setTotalRows] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState("ทั้งหมด");
   const [sortBy, setSortBy] = useState("entryTime");
   const [sortOrder, setSortOrder] = useState("DESC");
+  const [isLoading, setIsLoading] = useState(false);
 
   const buttons = ["ทั้งหมด", "รถเข้า", "รถออก"];
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -46,27 +46,8 @@ function DetailPage() {
     return date.toLocaleDateString("th-TH");
   };
 
-  // Client-side sorting function
-  const sortData = (data) => {
-    return [...data].sort((a, b) => {
-      let compareA, compareB;
 
-      if (sortBy === "entryTime") {
-        compareA = new Date(a.entry_time).getTime();
-        compareB = new Date(b.entry_time).getTime();
-      } else if (sortBy === "exitTime") {
-        compareA = a.exit_time ? new Date(a.exit_time).getTime() : 0;
-        compareB = b.exit_time ? new Date(b.exit_time).getTime() : 0;
-      }
-
-      if (sortOrder === "ASC") {
-        return compareA - compareB;
-      } else {
-        return compareB - compareA;
-      }
-    });
-  };
-
+  
   const getStatus = (row) => {
     if (selected === "รถเข้า") {
       return "กำลังจอด";
@@ -77,118 +58,196 @@ function DetailPage() {
     }
   };
 
-  const fetchAllRecords = async () => {
+  const extractPaginationInfo = (result) => {
+    // For /parking/records endpoint
+    if (result.pagination) {
+      return {
+        total: result.pagination.total_entries,
+        totalPages: parseInt(result.pagination.total_pages) || 
+                   Math.ceil(result.pagination.total_entries / rowsPerPage)
+      };
+    }
+    // For other endpoints
+    else if (result.total !== undefined) {
+      return {
+        total: result.total,
+        totalPages: parseInt(result.totalPages) || 
+                  Math.ceil(result.total / rowsPerPage)
+      };
+    }
+    // Fallback
+    return {
+      total: data.length,
+      totalPages: Math.ceil(data.length / rowsPerPage)
+    };
+  };
+
+  const fetchData = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${apiUrl}/parking/records`);
+      let url;
+      let requestBody = null;
+      let response;
+      
+      // Determine if we should use search endpoints based on searchQuery
+      const isSearching = searchQuery && searchQuery.trim().length > 0;
+      
+      // Build the URL or request based on the selected tab and whether we're searching
+      if (selected === "รถเข้า") {
+        if (isSearching) {
+          url = `${apiUrl}/parking/entry-records/search`;
+          requestBody = {
+            licensePlate: searchQuery,
+            page,
+            limit: rowsPerPage
+          };
+        } else {
+          url = `${apiUrl}/parking/entry-records?page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+        }
+      } else if (selected === "รถออก") {
+        if (isSearching) {
+          url = `${apiUrl}/parking/entry-exit-records/search`;
+          requestBody = {
+            licensePlate: searchQuery,
+            page,
+            limit: rowsPerPage
+          };
+        } else {
+          url = `${apiUrl}/parking/entry-exit-records?page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+        }
+      } else {
+        // For "ทั้งหมด" tab
+        if (isSearching) {
+          url = `${apiUrl}/parking/all-records/search`;
+          requestBody = {
+            licensePlate: searchQuery,
+            page,
+            limit: rowsPerPage,
+            sortBy,
+            sortOrder
+          };
+        } else {
+          url = `${apiUrl}/parking/records?page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+        }
+      }
+  
+      // Make the appropriate request based on whether we're searching or not
+      if (isSearching) {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+      } else {
+        response = await fetch(url);
+      }
+  
       const result = await response.json();
-      if (result.data) {
-        const formattedData = result.data.map((record) => ({
-          entry_records_id:
-            record.type === "active" ? record.entry_records_id : null,
-          entry_exit_records_id:
-            record.type === "completed" ? record.entry_exit_records_id : null,
+  
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to fetch data');
+      }
+  
+      let formattedData = [];
+  
+      if (selected === "รถเข้า" && result.data) {
+        formattedData = result.data.map((record) => ({
+          entry_records_id: record.parking_record_id || record.entry_records_id,
+          car: record.car,
+          entry_time: record.entry_time,
+          exit_time: null,
+          parkedHours: record.parkedHours,
+          parkingFee: record.parkingFee,
+          payments: record.payments || [],
+          type: "active",
+          isVip: record.isVip || record.car.isVip,
+          entry_car_image_path: record.entry_car_image_path,
+        }));
+      } else if (selected === "รถออก" && result.data) {
+        formattedData = result.data.map((record) => ({
+          entry_exit_records_id: record.parking_record_id || record.entry_exit_records_id,
           car: record.car,
           entry_time: record.entry_time,
           exit_time: record.exit_time,
-          parkedHours: record.parked_hours,
-          parkingFee: record.parking_fee,
+          parkedHours: record.parkedHours,
+          parkingFee: record.parkingFee,
           payments: record.payments || [],
-          type: record.type,
-          isVip: record.car.isVip,
+          type: "completed",
+          isVip: record.isVip || record.car.isVip,
           entry_car_image_path: record.entry_car_image_path,
         }));
-
-        const sortedData = sortData(formattedData);
-        setData(sortedData);
-        setFilteredData(sortedData);
-        setTotalRows(sortedData.length);
-        setPageCount(Math.ceil(sortedData.length / rowsPerPage));
+      } else if (result.data) {
+        formattedData = result.data.map((record) => ({
+          entry_records_id:
+            (record.type === "active" || !record.exit_time) ? 
+            (record.parking_record_id || record.entry_records_id) : 
+            null,
+          entry_exit_records_id:
+            (record.type === "completed" || record.exit_time) ? 
+            (record.parking_record_id || record.entry_exit_records_id) : 
+            null,
+          car: record.car,
+          entry_time: record.entry_time,
+          exit_time: record.exit_time,
+          parkedHours: record.parkedHours || record.parked_hours,
+          parkingFee: record.parkingFee || record.parking_fee,
+          payments: record.payments || [],
+          type: record.exit_time ? "completed" : "active",
+          isVip: record.isVip || record.car.isVip,
+          entry_car_image_path: record.entry_car_image_path,
+        }));
       }
+  
+      setData(formattedData);
+  
+      // Update pagination information
+      const { total, totalPages } = extractPaginationInfo(result);
+      setTotalRows(total);
+      setPageCount(totalPages);
     } catch (error) {
-      console.error("Error fetching all records:", error);
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const fetchEntryRecords = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/parking/entry-records`);
-      const result = await response.json();
-      if (result.success) {
-        const sortedData = sortData(result.data);
-        setData(sortedData);
-        setFilteredData(sortedData);
-        setTotalRows(sortedData.length);
-        setPageCount(Math.ceil(sortedData.length / rowsPerPage));
-      }
-    } catch (error) {
-      console.error("Error fetching entry records:", error);
+  // Effect for fetching data when key parameters change
+  useEffect(() => {
+    fetchData();
+  }, [selected, page, rowsPerPage, sortBy, sortOrder, searchQuery]);
+
+  const handleNextPage = () => {
+    if (page < pageCount) {
+      setPage(page + 1);
     }
   };
 
-  const fetchExitRecords = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/parking/entry-exit-records`);
-      const result = await response.json();
-      if (result.success) {
-        const sortedData = sortData(result.data);
-        setData(sortedData);
-        setFilteredData(sortedData);
-        setTotalRows(sortedData.length);
-        setPageCount(Math.ceil(sortedData.length / rowsPerPage));
-      }
-    } catch (error) {
-      console.error("Error fetching exit records:", error);
+  const handlePrevPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
     }
   };
 
-  // Effect for sorting
-  useEffect(() => {
-    const sortedData = sortData(filteredData);
-    setFilteredData(sortedData);
-  }, [sortBy, sortOrder]);
+  const handleRowsPerPageChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(1);
+  };
+  
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearchQuery(value);
+    setPage(1);
+  };
 
-  // Effect for fetching data based on selected tab
-  useEffect(() => {
-    switch (selected) {
-      case "รถเข้า":
-        fetchEntryRecords();
-        break;
-      case "รถออก":
-        fetchExitRecords();
-        break;
-      default:
-        fetchAllRecords();
-    }
-  }, [selected]);
-
-  // Effect for search filtering
-  useEffect(() => {
-    let filtered = data;
-    if (searchQuery !== "") {
-      filtered = data.filter((row) =>
-        row.car.license_plate.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    const sortedAndFiltered = sortData(filtered);
-    setFilteredData(sortedAndFiltered);
-    setPageCount(Math.ceil(sortedAndFiltered.length / rowsPerPage));
-
-    // Reset to page 1 if current page would be empty
-    const maxPage = Math.ceil(sortedAndFiltered.length / rowsPerPage);
-    if (page > maxPage) {
-      setPage(1);
-    }
-  }, [searchQuery, data, rowsPerPage]);
-
-  // Effect for updating pageCount when rowsPerPage changes
-  useEffect(() => {
-    setPageCount(Math.ceil(filteredData.length / rowsPerPage));
-    // Reset to page 1 if current page would be empty
-    const maxPage = Math.ceil(filteredData.length / rowsPerPage);
-    if (page > maxPage) {
-      setPage(1);
-    }
-  }, [rowsPerPage, filteredData.length]);
+  const handleSortChange = (event) => {
+    setSortBy(event.target.value);
+  };
+  
+  const handleSortOrderChange = (event) => {
+    setSortOrder(event.target.value);
+  };
 
   const handleSelectChange = (btn) => {
     setSelected(btn);
@@ -200,7 +259,7 @@ function DetailPage() {
   };
 
   const handleRowClick = (index) => {
-    setSelectedRow(filteredData[index]);
+    setSelectedRow(data[index]);
     setModalVisible(true);
   };
 
@@ -211,23 +270,6 @@ function DetailPage() {
 
   const getCurrentRowRange = () => {
     return `หน้า ${page} จาก ${pageCount}`;
-  };
-
-  const handleRowsPerPageChange = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(1);
-  };
-
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-    setPage(1);
-  };
-
-  // Get current rows for display
-  const getCurrentPageData = () => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredData.slice(start, end);
   };
 
   return (
@@ -266,45 +308,43 @@ function DetailPage() {
               />
             </div>
           </div>
-          <div className="flex gap-4">
-            {filteredData
-              .slice((page - 1) * rowsPerPage, page * rowsPerPage)
-              .map((record, index) => (
-                <div
-                  key={index}
-                  className="h-[110px] w-[130px] bg-gray-100 rounded-[8px] overflow-hidden relative"
-                >
-                  {record.entry_car_image_path ? (
-                    <img
-                      src={`${apiUrl}${record.entry_car_image_path}`}
-                      alt={`Car ${record.car.license_plate}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = "/placeholder-car.jpg";
-                        e.target.className =
-                          "w-full h-full object-contain bg-gray-200";
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                      <span className="text-gray-500">No Image</span>
-                    </div>
-                  )}
-                  <div
-                    className="absolute w-[85px] text-center bottom-0 left-0 text-white text-xs p-1 rounded-tr-xl"
-                    style={{ backgroundColor: "#007AFF" }}
-                  >
-                    {record.car.license_plate}
+          <div className="flex gap-4 overflow-x-auto">
+            {data.map((record, index) => (
+              <div
+                key={index}
+                className="h-[110px] w-[130px] bg-gray-100 rounded-[8px] overflow-hidden relative flex-shrink-0"
+              >
+                {record.entry_car_image_path ? (
+                  <img
+                    src={`${apiUrl}${record.entry_car_image_path}`}
+                    alt={`Car ${record.car.license_plate}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "/placeholder-car.jpg";
+                      e.target.className =
+                        "w-full h-full object-contain bg-gray-200";
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                    <span className="text-gray-500">No Image</span>
                   </div>
+                )}
+                <div
+                  className="absolute w-[85px] text-center bottom-0 left-0 text-white text-xs p-1 rounded-tr-xl"
+                  style={{ backgroundColor: "#007AFF" }}
+                >
+                  {record.car.license_plate}
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={handleSortChange}
                   disabled={selected === "รถเข้า"}
                   className={`px-4 pr-8 appearance-none py-2 border rounded-[8px] h-[40px] ${
                     selected === "รถเข้า"
@@ -337,7 +377,7 @@ function DetailPage() {
               <div className="relative">
                 <select
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
+                  onChange={handleSortOrderChange}
                   className="px-4 pr-8 appearance-none py-2 border rounded-[8px] h-[40px]"
                 >
                   <option value="DESC">มากไปน้อย</option>
@@ -377,72 +417,76 @@ function DetailPage() {
           </div>
         </div>
         <div className="mt-6 overflow-auto">
-          <table className="table-auto w-full border-collapse text-gray-700">
-            <thead>
-              <tr>
-                {[
-                  "คันที่",
-                  "ทะเบียนรถ",
-                  "วันที่เข้า",
-                  "เวลาเข้า",
-                  "เวลาออก",
-                  "ระยะเวลา (ชม.)",
-                  "ค่าบริการ (บาท)",
-                  "สถานะ",
-                ].map((header) => (
-                  <th
-                    key={header}
-                    className="px-4 py-3 bg-blue-200 sticky top-0 text-left"
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <table className="table-auto w-full border-collapse text-gray-700">
+              <thead>
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="text-3xl px-4 py-[6rem] text-center text-gray-400"
-                  >
-                    ไม่พบป้ายทะเบียนที่ค้นหา
-                  </td>
-                </tr>
-              ) : (
-                getCurrentPageData().map((row, index) => {
-                  const serialNumber = (page - 1) * rowsPerPage + index + 1;
-                  return (
-                    <tr
-                      key={index}
-                      onClick={() =>
-                        handleRowClick((page - 1) * rowsPerPage + index)
-                      }
-                      className="border-b hover:bg-blue-50 cursor-pointer"
+                  {[
+                    "คันที่",
+                    "ทะเบียนรถ",
+                    "วันที่เข้า",
+                    "เวลาเข้า",
+                    "เวลาออก",
+                    "ระยะเวลา (ชม.)",
+                    "ค่าบริการ (บาท)",
+                    "สถานะ",
+                  ].map((header) => (
+                    <th
+                      key={header}
+                      className="px-4 py-3 bg-blue-200 sticky top-0 text-left"
                     >
-                      <td className="px-4 py-3">{serialNumber}</td>
-                      <td className="px-4 py-3">{row.car.license_plate}</td>
-                      <td className="px-4 py-3">
-                        {formatDate(row.entry_time)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatTime(row.entry_time)}
-                      </td>
-                      <td className="px-4 py-3">{formatTime(row.exit_time)}</td>
-                      <td className="px-4 py-3">
-                        {row.parkedHours ? `${row.parkedHours}` : "-"}
-                      </td>
-                      <td className="px-4 py-3">{row.parkingFee}</td>
-                      <td className="px-4 py-3">{getStatus(row)}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      className="text-3xl px-4 py-[6rem] text-center text-gray-400"
+                    >
+                      {searchQuery ? "ไม่พบป้ายทะเบียนที่ค้นหา" : "ไม่มีข้อมูล"}
+                    </td>
+                  </tr>
+                ) : (
+                  data.map((row, index) => {
+                    const serialNumber = (page - 1) * rowsPerPage + index + 1;
+                    return (
+                      <tr
+                        key={index}
+                        onClick={() => handleRowClick(index)}
+                        className="border-b hover:bg-blue-50 cursor-pointer"
+                      >
+                        <td className="px-4 py-3">{serialNumber}</td>
+                        <td className="px-4 py-3">{row.car.license_plate}</td>
+                        <td className="px-4 py-3">
+                          {formatDate(row.entry_time)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatTime(row.entry_time)}
+                        </td>
+                        <td className="px-4 py-3">{formatTime(row.exit_time)}</td>
+                        <td className="px-4 py-3">
+                          {row.parkedHours ? `${row.parkedHours}` : "-"}
+                        </td>
+                        <td className="px-4 py-3">{row.parkingFee}</td>
+                        <td className="px-4 py-3">{getStatus(row)}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
         <div className="flex justify-end items-center mt-4 gap-6">
-          {filteredData.length > 0 && (
+          {data.length > 0 && (
             <>
               <div className="flex items-center gap-1">
                 <p className="text-sm ">รายการต่อหน้า :</p>
@@ -479,18 +523,14 @@ function DetailPage() {
               <p className="text-sm ">{getCurrentRowRange()}</p>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() =>
-                    setPage((prev) => (prev > 1 ? prev - 1 : prev))
-                  }
+                  onClick={handlePrevPage}
                   disabled={page === 1}
                   className={page === 1 ? "text-gray-300" : ""}
                 >
                   <ChevronLeftIcon className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() =>
-                    setPage((prev) => (prev < pageCount ? prev + 1 : prev))
-                  }
+                  onClick={handleNextPage}
                   disabled={page === pageCount}
                   className={page === pageCount ? "text-gray-300" : ""}
                 >

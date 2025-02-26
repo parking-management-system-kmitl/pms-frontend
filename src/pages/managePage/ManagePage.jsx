@@ -7,14 +7,12 @@ function ManagePage() {
   return (
     <PageCotainer>
       <div className=" space-y-10">
-      <ListManageFeeTable />
-      <ListManageDiscountTable />
-      <VIPPromotionsTable />
+        <ListManageFeeTable />
+        <ListManageDiscountTable />
+        <VIPPromotionsTable />
       </div>
-      
-      
     </PageCotainer>
-  )
+  );
 }
 
-export default ManagePage
+export default ManagePage;
