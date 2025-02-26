@@ -122,7 +122,7 @@ function LoginPage() {
           </button>
 
           <a
-            href=""
+            href="./login"
             className="self-end text-blue-500 mt-3 text-sm no-underline"
           >
             Forgot Password?

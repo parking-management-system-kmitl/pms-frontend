@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -25,20 +25,14 @@ function ListVipTable() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetchVipData();
-  }, [page, searchQuery]);
-
-  const fetchVipData = async () => {
+  const fetchVipData = useCallback(async () => {
     setIsLoading(true);
     try {
       let response;
 
-      // Determine if we should use search endpoint based on searchQuery
       const isSearching = searchQuery && searchQuery.trim().length > 0;
 
       if (isSearching) {
-        // Use search API endpoint
         response = await fetch(`${apiUrl}/vip/search`, {
           method: "POST",
           headers: {
@@ -51,7 +45,6 @@ function ListVipTable() {
           }),
         });
       } else {
-        // Use regular endpoint
         response = await fetch(
           `${apiUrl}/vip/getvip?page=${page}&limit=${ITEMS_PER_PAGE}`,
           {
@@ -72,7 +65,11 @@ function ListVipTable() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [apiUrl, page, searchQuery]);
+
+  useEffect(() => {
+    fetchVipData();
+  }, [fetchVipData]);
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
@@ -268,8 +265,6 @@ function ListVipTable() {
                 <select
                   value={ITEMS_PER_PAGE}
                   onChange={(e) => {
-                    // This would need a proper implementation to change items per page
-                    console.log("Items per page changed:", e.target.value);
                   }}
                   className="text-sm py-1 appearance-none px-2 border border-gray-300 rounded-md w-[50px]"
                 >

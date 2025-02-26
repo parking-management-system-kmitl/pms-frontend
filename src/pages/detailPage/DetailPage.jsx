@@ -16,7 +16,6 @@ function DetailPage() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedDiscount, setSelectedDiscount] = useState("");
   const [data, setData] = useState([]);
-  const [totalRows, setTotalRows] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState("ทั้งหมด");
@@ -203,8 +202,7 @@ function DetailPage() {
       setData(formattedData);
   
       // Update pagination information
-      const { total, totalPages } = extractPaginationInfo(result);
-      setTotalRows(total);
+      const { totalPages } = extractPaginationInfo(result);
       setPageCount(totalPages);
     } catch (error) {
       console.error("Error fetching data:", error);

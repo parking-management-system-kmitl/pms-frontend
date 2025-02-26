@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "../../components/ui/Card";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { th } from "date-fns/locale";
@@ -169,47 +169,50 @@ const Dashboard = () => {
     }
   };
 
-  const fetchDashboardData = async (start, end) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchDashboardData = useCallback(
+    async (start, end) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const adjustedStartDate = new Date(start);
-      adjustedStartDate.setHours(7, 0, 0, 0);
+        const adjustedStartDate = new Date(start);
+        adjustedStartDate.setHours(7, 0, 0, 0);
 
-      const adjustedEndDate = new Date(end);
-      adjustedEndDate.setHours(23, 59, 59, 999);
+        const adjustedEndDate = new Date(end);
+        adjustedEndDate.setHours(23, 59, 59, 999);
 
-      const body = {
-        startDate: adjustedStartDate.toISOString(),
-        endDate: adjustedEndDate.toISOString(),
-      };
+        const body = {
+          startDate: adjustedStartDate.toISOString(),
+          endDate: adjustedEndDate.toISOString(),
+        };
 
-      const response = await fetch(`${apiUrl}/dashboard`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+        const response = await fetch(`${apiUrl}/dashboard`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
 
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+        if (!response.ok) throw new Error("Failed to fetch dashboard data");
 
-      const data = await response.json();
-      setDashboardData(data);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const data = await response.json();
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [apiUrl]
+  );
 
   useEffect(() => {
     if (startDate && endDate) {
       fetchDashboardData(startDate, endDate);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, fetchDashboardData]);
 
   const predefinedRanges = [
     { label: "วันนี้", days: 0 },

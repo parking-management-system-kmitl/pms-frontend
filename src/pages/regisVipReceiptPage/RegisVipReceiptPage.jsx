@@ -1,7 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import kid from "../../assets/kids high five-cuate 1.svg";
 
 export default function RegisVipReceiptPage() {
-
+  const navigate = useNavigate();
+  
+  const handleBackClick = () => {
+    navigate("/regisVip");
+  };
+  
   return (
     <div className="flex flex-col items-center justify-between min-h-screen bg-white">
       <div className="w-full px-4">
@@ -18,9 +24,12 @@ export default function RegisVipReceiptPage() {
       <div className="w-full">
         <hr className="w-full h-px my-4 px-0 bg-gray-200 border-0 dark:bg-gray-200"/>
         <div className="px-4">
-        <button className="w-full bg-blue-600 hover:bg-blue-600 mb-[2rem] rounded-3xl h-[44px] text-white">
-          กลับหน้าหลัก
-        </button>
+          <button 
+            className="w-full bg-blue-600 hover:bg-blue-600 mb-[2rem] rounded-3xl h-[44px] text-white"
+            onClick={handleBackClick}
+          >
+            กลับหน้าหลัก
+          </button>
         </div>
       </div>
     </div>

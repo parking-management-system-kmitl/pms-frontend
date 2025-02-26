@@ -10,6 +10,8 @@ function LandingPage() {
   const [parkingData, setParkingData] = useState(null);
   const [latestPayment, setLatestPayment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [needNewPayment, setNeedNewPayment] = useState(false);
+  const [newPaymentDetails, setNewPaymentDetails] = useState(null);
 
   const formatDateTime = (dateTime) => {
     const date = new Date(dateTime);
@@ -27,7 +29,7 @@ function LandingPage() {
     console.log("License Plate ID:", id);
     const fetchData = async () => {
       try {
-        // First fetch latest payment history
+        // Fetch latest payment history
         const paymentResponse = await fetch(
           `${process.env.REACT_APP_API_URL}/parking/lastestpaymenthistory/${id}`
         );
@@ -35,6 +37,21 @@ function LandingPage() {
         
         if (paymentResult.latestPayment) {
           setLatestPayment(paymentResult.latestPayment);
+          
+          // Handle new API response format with needNewPayment
+          if (paymentResult.needNewPayment) {
+            setNeedNewPayment(true);
+            setNewPaymentDetails(paymentResult.newPaymentDetails);
+            setParkingData({
+              entryTime: paymentResult.entryTime,
+              currentTime: paymentResult.currentTime,
+              needNewPayment: true,
+              newPaymentDetails: paymentResult.newPaymentDetails
+            });
+            setLoading(false);
+            return;
+          }
+          
           // If there's a latest payment without exitTime, we don't need to check current parking
           if (!paymentResult.latestPayment.exitTime) {
             setParkingData(null);
@@ -78,7 +95,6 @@ function LandingPage() {
 
   // Use parking data if available, otherwise use latest payment
   const displayData = parkingData || { lastPayment: latestPayment };
-  const needsPayment = parkingData?.needNewPayment;
   const paymentDetails = parkingData?.newPaymentDetails;
 
   // Calculate duration in hours and minutes
@@ -107,7 +123,7 @@ function LandingPage() {
           </div>
         </div>
         <div className="space-y-4">
-          {(!needsPayment && displayData.lastPayment) ? (
+          {(!needNewPayment && displayData.lastPayment) ? (
             <>
               <p className="text-lg">ประวัติการชำระเงินล่าสุด</p>
               <div className="flex justify-between">
@@ -128,6 +144,12 @@ function LandingPage() {
                 <p>เวลาที่ชำระ</p>
                 <p>{formatDateTime(displayData.lastPayment.paidAt)}</p>
               </div>
+              {displayData.lastPayment.validUntil && (
+                <div className="flex justify-between">
+                  <p>มีผลถึง</p>
+                  <p>{formatDateTime(displayData.lastPayment.validUntil)}</p>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -146,7 +168,30 @@ function LandingPage() {
                   {duration.hours} ชม. {duration.minutes} นาที
                 </p>
               </div>
-              {paymentDetails && (
+              {needNewPayment && newPaymentDetails && (
+                <>
+                  <p className="text-lg">รายละเอียดการชำระเงินใหม่</p>
+                  <div className="flex justify-between">
+                    <p>เริ่มคิดค่าบริการต่อจาก</p>
+                    <p>{formatDateTime(newPaymentDetails.startTime)}</p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p>ค่าบริการจอดรถ</p>
+                    <p>{newPaymentDetails.originalAmount} บาท</p>
+                  </div>
+                  {parseFloat(newPaymentDetails.discount) > 0 && (
+                    <div className="flex justify-between">
+                      <p>ส่วนลด</p>
+                      <p>{newPaymentDetails.discount} บาท</p>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <p>ยอดชำระ</p>
+                    <p>{newPaymentDetails.amountAfterDiscount} บาท</p>
+                  </div>
+                </>
+              )}
+              {!needNewPayment && paymentDetails && (
                 <>
                   <div className="flex justify-between">
                     <p>ค่าบริการจอดรถ</p>
@@ -168,7 +213,7 @@ function LandingPage() {
           )}
         </div>
       </div>
-      {needsPayment && (
+      {(needNewPayment || (parkingData && parkingData.needNewPayment)) && (
         <div className="flex flex-col justify-center items-end space-y-4 w-full absolute bottom-0 p-5 border-t-[0.5px] border-gray-300">
           <button
             onClick={handlePayment}

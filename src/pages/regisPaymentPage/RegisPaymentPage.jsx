@@ -16,7 +16,6 @@ export default function RegisPaymentPage() {
   const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [chargeId, setChargeId] = useState("");
 
   const initialTime = 15 * 60;
   const [timeLeft, setTimeLeft] = useState(initialTime);
@@ -30,7 +29,6 @@ export default function RegisPaymentPage() {
 
         if (response.data.qrCodeUrl) {
           setQrCodeUrl(`${publicUrl}${response.data.qrCodeUrl}`);
-          setChargeId(response.data.chargeId);
         }
       } catch (err) {
         setError("ไม่สามารถสร้าง QR Code ได้ กรุณาลองใหม่อีกครั้ง");
