@@ -33,21 +33,21 @@ function ListVipTable() {
     setIsLoading(true);
     try {
       let response;
-      
+
       // Determine if we should use search endpoint based on searchQuery
       const isSearching = searchQuery && searchQuery.trim().length > 0;
-      
+
       if (isSearching) {
         // Use search API endpoint
         response = await fetch(`${apiUrl}/vip/search`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             licensePlate: searchQuery,
             page,
-            limit: ITEMS_PER_PAGE
+            limit: ITEMS_PER_PAGE,
           }),
         });
       } else {
@@ -60,9 +60,9 @@ function ListVipTable() {
           }
         );
       }
-      
+
       const result = await response.json();
-      
+
       if (result.data) {
         setVipData(result.data);
         setTotal(result.total);
@@ -161,7 +161,7 @@ function ListVipTable() {
             />
           </div>
         </div>
-        
+
         <div className="flex justify-end gap-4">
           <button
             className="bg-primary rounded-lg px-7 py-2 text-white"
@@ -177,7 +177,7 @@ function ListVipTable() {
           </button>
         </div>
       </div>
-      
+
       {isLoading ? (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -230,7 +230,9 @@ function ListVipTable() {
                   </td>
                   <td className="px-4 py-3">{row.license_plate}</td>
                   <td className="px-4 py-3">
-                    {row.member ? `${row.member.f_name} ${row.member.l_name}` : ""}
+                    {row.member
+                      ? `${row.member.f_name} ${row.member.l_name}`
+                      : ""}
                   </td>
                   <td className="px-4 py-3">{row.member?.phone || ""}</td>
                   <td className="px-4 py-3">
@@ -256,7 +258,7 @@ function ListVipTable() {
           </tbody>
         </table>
       )}
-      
+
       <div className="flex justify-end items-center mt-4 gap-6">
         {vipData.length > 0 && (
           <>
@@ -319,7 +321,7 @@ function ListVipTable() {
           </>
         )}
       </div>
-      
+
       <VipFormModal
         isOpen={isFormOpen}
         handleClose={handleCloseForm}

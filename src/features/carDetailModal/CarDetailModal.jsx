@@ -214,13 +214,13 @@ function CarDetailModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-2xl shadow-lg w-[850px] h-[600px] relative">
+      <div className="bg-white p-6 rounded-2xl shadow-lg w-[850px] relative">
         <div className="w-full flex justify-end">
           <button onClick={onClose}>
             <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
           </button>
         </div>
-        <div className="flex flex-row">
+        <div className="flex flex-row mb-2">
           {/* Left Section */}
           <div className="w-1/2 mr-5 ml-4">
             <h1 className="font-inter text-blue-500 text-lg font-semibold">
