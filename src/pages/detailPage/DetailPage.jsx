@@ -45,8 +45,6 @@ function DetailPage() {
     return date.toLocaleDateString("th-TH");
   };
 
-
-  
   const getStatus = (row) => {
     if (selected === "รถเข้า") {
       return "กำลังจอด";
@@ -62,22 +60,23 @@ function DetailPage() {
     if (result.pagination) {
       return {
         total: result.pagination.total_entries,
-        totalPages: parseInt(result.pagination.total_pages) || 
-                   Math.ceil(result.pagination.total_entries / rowsPerPage)
+        totalPages:
+          parseInt(result.pagination.total_pages) ||
+          Math.ceil(result.pagination.total_entries / rowsPerPage),
       };
     }
     // For other endpoints
     else if (result.total !== undefined) {
       return {
         total: result.total,
-        totalPages: parseInt(result.totalPages) || 
-                  Math.ceil(result.total / rowsPerPage)
+        totalPages:
+          parseInt(result.totalPages) || Math.ceil(result.total / rowsPerPage),
       };
     }
     // Fallback
     return {
       total: data.length,
-      totalPages: Math.ceil(data.length / rowsPerPage)
+      totalPages: Math.ceil(data.length / rowsPerPage),
     };
   };
 
@@ -87,23 +86,23 @@ function DetailPage() {
       let url;
       let requestBody = null;
       let response;
-      
-      const token = localStorage.getItem('access_token');
-      
+
+      const token = localStorage.getItem("access_token");
+
       const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       };
-      
+
       const isSearching = searchQuery && searchQuery.trim().length > 0;
-      
+
       if (selected === "รถเข้า") {
         if (isSearching) {
           url = `${apiUrl}/parking/entry-records/search`;
           requestBody = {
             licensePlate: searchQuery,
             page,
-            limit: rowsPerPage
+            limit: rowsPerPage,
           };
         } else {
           url = `${apiUrl}/parking/entry-records?page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
@@ -114,7 +113,7 @@ function DetailPage() {
           requestBody = {
             licensePlate: searchQuery,
             page,
-            limit: rowsPerPage
+            limit: rowsPerPage,
           };
         } else {
           url = `${apiUrl}/parking/entry-exit-records?page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
@@ -127,34 +126,34 @@ function DetailPage() {
             page,
             limit: rowsPerPage,
             sortBy,
-            sortOrder
+            sortOrder,
           };
         } else {
           url = `${apiUrl}/parking/records?page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
         }
       }
-  
+
       if (isSearching) {
         response = await fetch(url, {
-          method: 'POST',
+          method: "POST",
           headers: headers,
           body: JSON.stringify(requestBody),
         });
       } else {
         response = await fetch(url, {
-          method: 'GET',
-          headers: headers
+          method: "GET",
+          headers: headers,
         });
       }
-  
+
       const result = await response.json();
-  
+
       if (!response.ok) {
-        throw new Error(result.message || 'Failed to fetch data');
+        throw new Error(result.message || "Failed to fetch data");
       }
-  
+
       let formattedData = [];
-  
+
       if (selected === "รถเข้า" && result.data) {
         formattedData = result.data.map((record) => ({
           entry_records_id: record.parking_record_id || record.entry_records_id,
@@ -170,7 +169,8 @@ function DetailPage() {
         }));
       } else if (selected === "รถออก" && result.data) {
         formattedData = result.data.map((record) => ({
-          entry_exit_records_id: record.parking_record_id || record.entry_exit_records_id,
+          entry_exit_records_id:
+            record.parking_record_id || record.entry_exit_records_id,
           car: record.car,
           entry_time: record.entry_time,
           exit_time: record.exit_time,
@@ -184,13 +184,13 @@ function DetailPage() {
       } else if (result.data) {
         formattedData = result.data.map((record) => ({
           entry_records_id:
-            (record.type === "active" || !record.exit_time) ? 
-            (record.parking_record_id || record.entry_records_id) : 
-            null,
+            record.type === "active" || !record.exit_time
+              ? record.parking_record_id || record.entry_records_id
+              : null,
           entry_exit_records_id:
-            (record.type === "completed" || record.exit_time) ? 
-            (record.parking_record_id || record.entry_exit_records_id) : 
-            null,
+            record.type === "completed" || record.exit_time
+              ? record.parking_record_id || record.entry_exit_records_id
+              : null,
           car: record.car,
           entry_time: record.entry_time,
           exit_time: record.exit_time,
@@ -202,9 +202,9 @@ function DetailPage() {
           entry_car_image_path: record.entry_car_image_path,
         }));
       }
-  
+
       setData(formattedData);
-  
+
       // Update pagination information
       const { totalPages } = extractPaginationInfo(result);
       setPageCount(totalPages);
@@ -236,7 +236,7 @@ function DetailPage() {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(1);
   };
-  
+
   const handleSearchChange = (event) => {
     const value = event.target.value;
     setSearchQuery(value);
@@ -246,7 +246,7 @@ function DetailPage() {
   const handleSortChange = (event) => {
     setSortBy(event.target.value);
   };
-  
+
   const handleSortOrderChange = (event) => {
     setSortOrder(event.target.value);
   };
@@ -453,7 +453,9 @@ function DetailPage() {
                       colSpan="8"
                       className="text-3xl px-4 py-[6rem] text-center text-gray-400"
                     >
-                      {searchQuery ? "ไม่พบป้ายทะเบียนที่ค้นหา" : "ไม่มีข้อมูล"}
+                      {searchQuery
+                        ? "ไม่พบป้ายทะเบียนที่ค้นหา"
+                        : "ไม่มีรายการจอดรถ"}
                     </td>
                   </tr>
                 ) : (
@@ -473,7 +475,9 @@ function DetailPage() {
                         <td className="px-4 py-3">
                           {formatTime(row.entry_time)}
                         </td>
-                        <td className="px-4 py-3">{formatTime(row.exit_time)}</td>
+                        <td className="px-4 py-3">
+                          {formatTime(row.exit_time)}
+                        </td>
                         <td className="px-4 py-3">
                           {row.parkedHours ? `${row.parkedHours}` : "-"}
                         </td>
