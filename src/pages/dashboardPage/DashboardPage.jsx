@@ -55,24 +55,32 @@ const Dashboard = () => {
 
   const calculateDateRange = (days, type = "days") => {
     const today = new Date();
-    let pastDate = new Date();
+    let startDate = new Date();
+    let endDate = new Date();
 
     if (type === "month") {
       if (days === 0) {
-        pastDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        today.setMonth(today.getMonth() + 1, 0);
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        endDate = today;
       } else if (days === 1) {
-        pastDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        today.setMonth(today.getMonth(), 0);
+        startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        endDate = new Date(today.getFullYear(), today.getMonth(), 0);
       }
+    } else if (days === 0) {
+      startDate = today;
+      endDate = today;
     } else if (days === 1) {
-      pastDate.setDate(today.getDate() - 1);
-      today.setDate(today.getDate() - 1);
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - 1);
+      endDate = new Date(today);
+      endDate.setDate(today.getDate() - 1);
     } else {
-      pastDate.setDate(today.getDate() - days);
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - (days - 1)); // Subtract (days-1) to include today
+      endDate = today;
     }
 
-    return { start: pastDate, end: today };
+    return { start: startDate, end: endDate };
   };
 
   const handleApplyDateRange = () => {
@@ -186,11 +194,18 @@ const Dashboard = () => {
           endDate: adjustedEndDate.toISOString(),
         };
 
+        // Get the token from localStorage
+        const token = localStorage.getItem("access_token");
+
+        // Create headers with authorization token
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        };
+
         const response = await fetch(`${apiUrl}/dashboard`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: headers,
           body: JSON.stringify(body),
         });
 

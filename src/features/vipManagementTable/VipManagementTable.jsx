@@ -12,7 +12,7 @@ function VIPPromotionsTable() {
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteData, setDeleteData] = useState(null);
-  const [isToggling, setIsToggling] = useState(false); // เพิ่มสถานะสำหรับการ toggle
+  const [isToggling, setIsToggling] = useState(false);
 
   const [editData, setEditData] = useState({
     vip_promotion_id: "",
@@ -27,6 +27,15 @@ function VIPPromotionsTable() {
   });
 
   const itemsPerPage = 5;
+
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("access_token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
   useEffect(() => {
     fetchPromotions();
@@ -61,49 +70,36 @@ function VIPPromotionsTable() {
   };
 
   const handleToggleStatus = async (promotionId) => {
-    // หาข้อมูล promotion ที่จะทำการ toggle
     const promotionToToggle = promotions.find(
       (p) => p.vip_promotion_id === promotionId
     );
-    
+
     if (!promotionToToggle) return;
-    
-    // ถ้าเป็นการปิด (ตอนนี้ active = true) ไม่ต้องดำเนินการต่อ
-    // เนื่องจาก API ออกแบบมาให้ต้องมีการเปิด promotion เท่านั้น
+
     if (promotionToToggle.isActive) {
       return;
     }
-    
-    // อัปเดตสถานะในข้อมูลก่อนเพื่อให้มี UI feedback ทันที
-    setIsToggling(true); // เริ่มการ toggle
-    
-    // อัปเดตสถานะใน state โดยตรงแทนที่จะโหลดข้อมูลใหม่ทั้งหมด
-    // เมื่อเปิด promotion ใหม่ ต้องปิด promotion อื่นที่เปิดอยู่ด้วย
+
+    setIsToggling(true);
+
     const updatedPromotions = promotions.map((promotion) => {
-      // ถ้าเป็นรายการที่ต้องการเปิด
       if (promotion.vip_promotion_id === promotionId) {
         return { ...promotion, isActive: true };
-      } 
-      // ถ้าเป็นรายการอื่นที่กำลังเปิดอยู่ ให้ปิด
-      else if (promotion.isActive) {
+      } else if (promotion.isActive) {
         return { ...promotion, isActive: false };
       }
-      // รายการที่ปิดอยู่แล้ว ไม่ต้องทำอะไร
       return promotion;
     });
-    
+
     setPromotions(updatedPromotions);
-    
-    // แล้วค่อยส่ง API request ไปอัปเดตที่ server
+
     const apiUrl = `${process.env.REACT_APP_API_URL}/vip-promotions/activate/${promotionId}`;
     try {
       const response = await fetch(apiUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
       });
-      
+
       if (!response.ok) {
         console.error("Failed to toggle promotion status");
         // หากไม่สำเร็จ ให้คืนค่าสถานะเดิม
@@ -114,7 +110,7 @@ function VIPPromotionsTable() {
       // หากเกิดข้อผิดพลาด ให้คืนค่าสถานะเดิม
       setPromotions(promotions);
     } finally {
-      setIsToggling(false); // สิ้นสุดการ toggle
+      setIsToggling(false);
     }
   };
 
@@ -123,9 +119,7 @@ function VIPPromotionsTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           days: Number(editData.days),
           price: Number(editData.price),
@@ -143,7 +137,7 @@ function VIPPromotionsTable() {
               }
             : promotion
         );
-        
+
         setPromotions(updatedPromotions);
         setShowEditPopup(false);
       } else {
@@ -159,9 +153,7 @@ function VIPPromotionsTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           days: String(newPromotion.days),
           price: String(newPromotion.price),
@@ -191,16 +183,14 @@ function VIPPromotionsTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
       });
       if (response.ok) {
         // อัปเดต state โดยตรงแทนที่จะโหลดข้อมูลใหม่ทั้งหมด
         const updatedPromotions = promotions.filter(
           (promotion) => promotion.vip_promotion_id !== deleteData
         );
-        
+
         setPromotions(updatedPromotions);
         setShowDeletePopup(false);
       } else {
@@ -266,11 +256,19 @@ function VIPPromotionsTable() {
                       {Number(promotion.price).toLocaleString()}
                     </td>
                     <td className="px-3 py-3">
-                      <label className={`inline-flex items-center ${promotion.isActive ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                      <label
+                        className={`inline-flex items-center ${
+                          promotion.isActive
+                            ? "cursor-not-allowed"
+                            : "cursor-pointer"
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           checked={promotion.isActive}
-                          onChange={() => handleToggleStatus(promotion.vip_promotion_id)}
+                          onChange={() =>
+                            handleToggleStatus(promotion.vip_promotion_id)
+                          }
                           disabled={isToggling || promotion.isActive}
                           className="toggle-checkbox"
                         />
@@ -282,7 +280,9 @@ function VIPPromotionsTable() {
                         <PencilSquareIcon className="w-5 h-5 text-primary" />
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(promotion.vip_promotion_id)}
+                        onClick={() =>
+                          handleDeleteClick(promotion.vip_promotion_id)
+                        }
                       >
                         <TrashIcon className="w-5 h-5 text-red-500" />
                       </button>

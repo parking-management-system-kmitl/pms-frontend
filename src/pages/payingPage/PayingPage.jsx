@@ -146,7 +146,7 @@ function PayingPage() {
                         </div>
                     </div>
 
-                    <div className="w-full flex justify-center items-center mt-6">
+                    {/* <div className="w-full flex justify-center items-center mt-6">
                         <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
                             <button 
                                 onClick={handleDownloadQR}
@@ -156,7 +156,7 @@ function PayingPage() {
                             </button>
                             <p className="mt-2 text-sm">บันทึก QR</p>
                         </div>
-                    </div>
+                    </div> */}
                     <div className="flex justify-center items-center mt-6 h-24 w-full"></div>
                 </div>
             </div>

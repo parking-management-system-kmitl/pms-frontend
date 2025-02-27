@@ -19,6 +19,15 @@ function CarDetailModal({
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // Get token from localStorage
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("access_token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   useEffect(() => {
     const fetchDiscounts = async () => {
       if (!carId) return;
@@ -29,9 +38,7 @@ function CarDetailModal({
       try {
         const response = await fetch(`${apiUrl}/discount/list`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             car_id: carId,
           }),
@@ -66,7 +73,10 @@ function CarDetailModal({
           `${apiUrl}/parking/lastestpaymenthistory/${encodeURIComponent(
             selectedRow.car.license_plate
           )}`,
-          { method: "GET" }
+          {
+            method: "GET",
+            headers: getAuthHeaders(),
+          }
         );
 
         if (!response.ok) {
@@ -109,9 +119,7 @@ function CarDetailModal({
     try {
       const response = await fetch(`${apiUrl}/discount/apply`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           car_id: carId,
           discount_id: selectedDiscountObj.discount_id,
@@ -160,9 +168,7 @@ function CarDetailModal({
       console.log(selectedRow.car.license_plate);
       const response = await fetch(`${apiUrl}/parking/payment/mock`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           licensePlate: selectedRow.car.license_plate,
         }),

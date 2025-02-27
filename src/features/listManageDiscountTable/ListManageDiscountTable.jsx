@@ -52,6 +52,15 @@ function ListManageDiscountTable() {
     is_active: true,
   });
 
+  // Get authorization headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("access_token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   useEffect(() => {
     const fetchDiscounts = async () => {
       const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/discounts`;
@@ -59,9 +68,7 @@ function ListManageDiscountTable() {
         setIsLoading(true);
         const response = await fetch(apiUrl, {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
         });
         const data = await response.json();
         if (data.status === 200 && Array.isArray(data.data)) {
@@ -100,9 +107,7 @@ function ListManageDiscountTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           ...discount,
           is_active: !discount.is_active,
@@ -127,9 +132,7 @@ function ListManageDiscountTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           title: editData.title,
           customer_type: editData.customer_type,
@@ -166,19 +169,14 @@ function ListManageDiscountTable() {
       is_active: true,
     };
 
-    console.log("Data to be sent:", requestBody);
-
     try {
       const response = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
-      console.log("Response from server:", data);
 
       if (data.status === 201) {
         setDiscounts([...discounts, data.data]);
@@ -209,9 +207,7 @@ function ListManageDiscountTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {

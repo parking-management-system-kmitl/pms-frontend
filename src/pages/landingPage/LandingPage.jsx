@@ -12,6 +12,7 @@ function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [needNewPayment, setNeedNewPayment] = useState(false);
   const [newPaymentDetails, setNewPaymentDetails] = useState(null);
+  const [isPaymentEnabled, setIsPaymentEnabled] = useState(false);
 
   const formatDateTime = (dateTime) => {
     const date = new Date(dateTime);
@@ -34,10 +35,10 @@ function LandingPage() {
           `${process.env.REACT_APP_API_URL}/parking/lastestpaymenthistory/${id}`
         );
         const paymentResult = await paymentResponse.json();
-        
+
         if (paymentResult.latestPayment) {
           setLatestPayment(paymentResult.latestPayment);
-          
+
           // Handle new API response format with needNewPayment
           if (paymentResult.needNewPayment) {
             setNeedNewPayment(true);
@@ -46,12 +47,19 @@ function LandingPage() {
               entryTime: paymentResult.entryTime,
               currentTime: paymentResult.currentTime,
               needNewPayment: true,
-              newPaymentDetails: paymentResult.newPaymentDetails
+              newPaymentDetails: paymentResult.newPaymentDetails,
             });
+
+            // Check if payment is enabled based on amount
+            const amountAfterDiscount = parseFloat(
+              paymentResult.newPaymentDetails?.amountAfterDiscount || 0
+            );
+            setIsPaymentEnabled(amountAfterDiscount >= 20);
+
             setLoading(false);
             return;
           }
-          
+
           // If there's a latest payment without exitTime, we don't need to check current parking
           if (!paymentResult.latestPayment.exitTime) {
             setParkingData(null);
@@ -74,6 +82,12 @@ function LandingPage() {
         const parkingResult = await parkingResponse.json();
         if (parkingResult.success) {
           setParkingData(parkingResult.data);
+
+          // Check if payment is enabled based on amount
+          const amountAfterDiscount = parseFloat(
+            parkingResult.data?.newPaymentDetails?.amountAfterDiscount || 0
+          );
+          setIsPaymentEnabled(amountAfterDiscount >= 20);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -85,8 +99,20 @@ function LandingPage() {
     if (id) fetchData();
   }, [id]);
 
+  // Update isPaymentEnabled whenever parkingData or newPaymentDetails changes
+  useEffect(() => {
+    const paymentAmount = parseFloat(
+      newPaymentDetails?.amountAfterDiscount ||
+        parkingData?.newPaymentDetails?.amountAfterDiscount ||
+        0
+    );
+    setIsPaymentEnabled(paymentAmount >= 20);
+  }, [parkingData, newPaymentDetails]);
+
   const handlePayment = () => {
-    navigate(`/payment/${id}`);
+    if (isPaymentEnabled) {
+      navigate(`/payment/${id}`);
+    }
   };
 
   if (loading) return <p>Loading...</p>;
@@ -104,13 +130,19 @@ function LandingPage() {
     const diffInMinutes = Math.floor((current - start) / (1000 * 60));
     return {
       hours: Math.floor(diffInMinutes / 60),
-      minutes: diffInMinutes % 60
+      minutes: diffInMinutes % 60,
     };
   };
 
-  const duration = parkingData ? 
-    getDuration(parkingData.entryTime, parkingData.currentTime) :
-    { hours: 0, minutes: 0 };
+  const duration = parkingData
+    ? getDuration(parkingData.entryTime, parkingData.currentTime)
+    : { hours: 0, minutes: 0 };
+
+  const paymentAmount = parseFloat(
+    newPaymentDetails?.amountAfterDiscount ||
+      paymentDetails?.amountAfterDiscount ||
+      0
+  );
 
   return (
     <div>
@@ -123,7 +155,7 @@ function LandingPage() {
           </div>
         </div>
         <div className="space-y-4">
-          {(!needNewPayment && displayData.lastPayment) ? (
+          {!needNewPayment && displayData.lastPayment ? (
             <>
               <p className="text-lg">ประวัติการชำระเงินล่าสุด</p>
               <div className="flex justify-between">
@@ -170,11 +202,10 @@ function LandingPage() {
               </div>
               {needNewPayment && newPaymentDetails && (
                 <>
-                  <p className="text-lg">รายละเอียดการชำระเงินใหม่</p>
-                  <div className="flex justify-between">
+                  {/* <div className="flex justify-between">
                     <p>เริ่มคิดค่าบริการต่อจาก</p>
                     <p>{formatDateTime(newPaymentDetails.startTime)}</p>
-                  </div>
+                  </div> */}
                   <div className="flex justify-between">
                     <p>ค่าบริการจอดรถ</p>
                     <p>{newPaymentDetails.originalAmount} บาท</p>
@@ -217,7 +248,12 @@ function LandingPage() {
         <div className="flex flex-col justify-center items-end space-y-4 w-full absolute bottom-0 p-5 border-t-[0.5px] border-gray-300">
           <button
             onClick={handlePayment}
-            className="w-full flex justify-center items-center bg-[#007AFF] text-white p-3 rounded-[20px] shadow-md font-medium text-md"
+            disabled={!isPaymentEnabled}
+            className={`w-full flex justify-center items-center ${
+              isPaymentEnabled
+                ? "bg-[#007AFF] text-white"
+                : "bg-gray-400 text-gray-200 cursor-not-allowed"
+            } p-3 rounded-[20px] shadow-md font-medium text-md`}
           >
             ชำระเงิน
           </button>

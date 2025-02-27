@@ -21,7 +21,6 @@ function LlistManageFeeTable() {
     note_description: "",
     minute_rounding_threshold: 0,
     exit_buffer_time: 0,
-    overflow_hour_rate: 0,
   });
 
   const [tempCondition, setTempCondition] = useState(
@@ -31,7 +30,6 @@ function LlistManageFeeTable() {
   // Temporary state variables
   const [tempMinuteRounding, setTempMinuteRounding] = useState("");
   const [tempExitBuffer, setTempExitBuffer] = useState("");
-  const [tempOverflowRate, setTempOverflowRate] = useState("");
 
   // New state for adding parking rate
   const [newParkingRate, setNewParkingRate] = useState({
@@ -42,12 +40,23 @@ function LlistManageFeeTable() {
   // Modified: Changed items per page from 10 to 5
   const itemsPerPage = 5;
 
+  // Get authentication token
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("access_token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   // Fetch parking options data
   useEffect(() => {
     const fetchParkingOptions = async () => {
       const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/options`;
       try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(apiUrl, {
+          headers: getAuthHeaders(),
+        });
         const data = await response.json();
         if (data.status === 200) {
           const updatedData = {
@@ -57,7 +66,6 @@ function LlistManageFeeTable() {
               10
             ),
             exit_buffer_time: parseInt(data.data.exit_buffer_time, 10),
-            overflow_hour_rate: parseInt(data.data.overflow_hour_rate, 10),
           };
 
           setParkingOptions(updatedData);
@@ -76,7 +84,9 @@ function LlistManageFeeTable() {
     const fetchParkingRates = async () => {
       const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/rates`;
       try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(apiUrl, {
+          headers: getAuthHeaders(),
+        });
         const data = await response.json();
         if (data.status === 200 && Array.isArray(data.data)) {
           setParkingRates(data.data);
@@ -102,15 +112,12 @@ function LlistManageFeeTable() {
       note_description: tempCondition,
       minute_rounding_threshold: parseInt(tempMinuteRounding, 10),
       exit_buffer_time: parseInt(tempExitBuffer, 10),
-      overflow_hour_rate: parseInt(tempOverflowRate, 10),
     };
 
     try {
       const response = await fetch(apiUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(requestBody),
       });
 
@@ -123,7 +130,6 @@ function LlistManageFeeTable() {
             10
           ),
           exit_buffer_time: parseInt(data.data.exit_buffer_time, 10),
-          overflow_hour_rate: parseInt(data.data.overflow_hour_rate, 10),
         };
 
         setParkingOptions(updatedData);
@@ -154,9 +160,7 @@ function LlistManageFeeTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newParkingRate),
       });
       const data = await response.json();
@@ -177,9 +181,7 @@ function LlistManageFeeTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ rate_at_hour: editData.rate_at_hour }),
       });
 
@@ -205,9 +207,7 @@ function LlistManageFeeTable() {
     try {
       const response = await fetch(apiUrl, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
       });
 
       const data = await response.json();
@@ -277,18 +277,6 @@ function LlistManageFeeTable() {
                   />
                 </div>
               </div>
-              <div className="mb-4 w-full">
-                <label className="block text-sm font-medium mb-1">
-                  อัตราค่าบริการชั่วโมงที่เกิน (บาท)
-                </label>
-                <input
-                  type="number"
-                  value={tempOverflowRate}
-                  onChange={(e) => setTempOverflowRate(e.target.value)}
-                  className="border border-gray-300 rounded p-2 w-full"
-                  placeholder={parkingOptions.overflow_hour_rate.toString()}
-                />
-              </div>
               <div className="mb-6">
                 <label
                   htmlFor="feeCondition"
@@ -330,9 +318,6 @@ function LlistManageFeeTable() {
                   parkingOptions.minute_rounding_threshold.toString()
                 );
                 setTempExitBuffer(parkingOptions.exit_buffer_time.toString());
-                setTempOverflowRate(
-                  parkingOptions.overflow_hour_rate.toString()
-                );
                 setTempCondition(parkingOptions.note_description);
               }}
             >
@@ -353,14 +338,6 @@ function LlistManageFeeTable() {
                 </span>
                 <span className="text-sm ml-2">
                   {parkingOptions.exit_buffer_time} นาที
-                </span>
-              </div>
-              <div>
-                <span className="text-sm font-medium">
-                  อัตราค่าบริการชั่วโมงที่เกิน:
-                </span>
-                <span className="text-sm ml-2">
-                  {parkingOptions.overflow_hour_rate} บาท
                 </span>
               </div>
               <div>
@@ -420,7 +397,9 @@ function LlistManageFeeTable() {
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
-            <h2 className="text-3xl font-medium mb-4">จัดการอัตราค่าบริการจอดรถ</h2>
+            <h2 className="text-3xl font-medium mb-4">
+              จัดการอัตราค่าบริการจอดรถ
+            </h2>
             <div className="mb-4 w-full">
               <label className="block text-sm font-medium mb-1">
                 ชั่วโมงที่จอด (ชม.)

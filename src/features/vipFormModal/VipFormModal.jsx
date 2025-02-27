@@ -28,6 +28,15 @@ const schema = yup
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
+// Helper function to get authentication headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("access_token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+};
+
 function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
   const [showRegisterCar, setShowRegisterCar] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -57,11 +66,15 @@ function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
 
   const onSubmit = async (data) => {
     try {
-      const registerResponse = await axios.post(`${apiUrl}/member/register`, {
-        f_name: data.firstName,
-        l_name: data.lastName,
-        phone: data.tel,
-      });
+      const registerResponse = await axios.post(
+        `${apiUrl}/member/register`,
+        {
+          f_name: data.firstName,
+          l_name: data.lastName,
+          phone: data.tel,
+        },
+        { headers: getAuthHeaders() } // Add authentication headers
+      );
 
       if (!registerResponse.data.status) {
         setErrorMessage(registerResponse.data.message);
@@ -100,11 +113,15 @@ function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
         return;
       }
 
-      const linkResponse = await axios.post(`${apiUrl}/member/link-car`, {
-        phone: formData.tel,
-        licenseplate: licensePlate,
-        vip_days: formData.vip_days,
-      });
+      const linkResponse = await axios.post(
+        `${apiUrl}/member/link-car`,
+        {
+          phone: formData.tel,
+          licenseplate: licensePlate,
+          vip_days: formData.vip_days,
+        },
+        { headers: getAuthHeaders() } // Add authentication headers
+      );
 
       if (linkResponse.data.message === "Car linked successfully") {
         setSuccessMessage("สมัครสมาชิกและลงทะเบียนรถสำเร็จ!");

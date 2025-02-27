@@ -188,7 +188,7 @@ function ReceiptPage() {
             </div>
           </div>
         </div>
-
+{/* 
         <div className="w-full flex justify-center items-center mt-6">
           <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
             <button
@@ -199,7 +199,7 @@ function ReceiptPage() {
             </button>
             <p className="mt-2 text-sm">บันทึกใบเสร็จ</p>
           </div>
-        </div>
+        </div> */}
 
         {/* VIP Registration Link */}
         <div className="w-full flex justify-center items-center mt-4 mb-6">

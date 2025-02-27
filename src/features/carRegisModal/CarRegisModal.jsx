@@ -34,15 +34,14 @@ const CarRegisModal = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isAnyFieldFilled, setIsAnyFieldFilled] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     reset,
     setValue,
-    trigger,
+    watch,
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -50,20 +49,28 @@ const CarRegisModal = ({
       licenseplate: formData?.licenseplate || "",
       vip_days: formData?.vip_days || "",
     },
-    mode: "onChange", // เปลี่ยนเป็น onChange เพื่อตรวจสอบทุกครั้งที่มีการพิมพ์
+    mode: "onChange",
   });
 
+  const watchedFields = watch();
+
+  const isAnyFieldFilled =
+    !!watchedFields.tel ||
+    !!watchedFields.licenseplate ||
+    !!watchedFields.vip_days;
+
   useEffect(() => {
-    // ตรวจสอบว่ามีการกรอกข้อมูลในช่องใดช่องหนึ่งหรือไม่
-    const hasAnyField =
-      (formData?.tel && formData.tel.length > 0) ||
-      (formData?.licenseplate && formData.licenseplate.length > 0) ||
-      (formData?.vip_days && formData.vip_days.length > 0);
+    if (formData?.tel !== watchedFields.tel || 
+        formData?.licenseplate !== watchedFields.licenseplate || 
+        formData?.vip_days !== watchedFields.vip_days) {
+      setFormData({
+        tel: watchedFields.tel || "",
+        licenseplate: watchedFields.licenseplate || "",
+        vip_days: watchedFields.vip_days || "",
+      });
+    }
+  }, [watchedFields, formData, setFormData]);
 
-    setIsAnyFieldFilled(hasAnyField);
-  }, [formData]);
-
-  // Update form values when formData changes from parent
   useEffect(() => {
     if (formData?.tel) setValue("tel", formData.tel);
     if (formData?.licenseplate) setValue("licenseplate", formData.licenseplate);
@@ -79,6 +86,13 @@ const CarRegisModal = ({
     setErrorMessage("");
 
     try {
+      const token = localStorage.getItem("access_token");
+
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
       const response = await axios.post(
         apiUrl,
         {
@@ -86,11 +100,7 @@ const CarRegisModal = ({
           licenseplate: data.licenseplate,
           vip_days: data.vip_days,
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { headers }
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -127,6 +137,8 @@ const CarRegisModal = ({
       let errorMessage = "ไม่สามารถลงทะเบียนได้";
       if (error.response?.status === 409) {
         errorMessage = "รถคันนี้มีการลงทะเบียนแล้ว";
+      } else if (error.response?.status === 401) {
+        errorMessage = "ไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่";
       } else {
         errorMessage = error.response?.data?.message || errorMessage;
       }
@@ -148,12 +160,6 @@ const CarRegisModal = ({
     onClose();
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // ทริกเกอร์การตรวจสอบความถูกต้องทันทีสำหรับฟิลด์นี้
-    trigger(field);
-  };
-
   return (
     <>
       {isOpen && (
@@ -170,14 +176,12 @@ const CarRegisModal = ({
               <h2 className="text-3xl font-bold">ลงทะเบียนรถ VIP</h2>
             </div>
 
-            {/* แสดง error message ในโมดัลเดียวกัน */}
             {errorMessage && (
               <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded mb-4">
                 <p className="text-center">{errorMessage}</p>
               </div>
             )}
 
-            {/* แสดง success message ในโมดัลเดียวกัน */}
             {successMessage ? (
               <div className="text-center p-4">
                 <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
@@ -198,10 +202,6 @@ const CarRegisModal = ({
                       className={`w-full border p-2 rounded ${
                         errors.tel ? "border-red-500" : ""
                       }`}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        handleInputChange("tel", value);
-                      }}
                     />
                     {errors.tel && (
                       <span className="text-xs text-error">
@@ -221,10 +221,6 @@ const CarRegisModal = ({
                       className={`w-full border p-2 rounded ${
                         errors.licenseplate ? "border-red-500" : ""
                       }`}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        handleInputChange("licenseplate", value);
-                      }}
                     />
                     {errors.licenseplate && (
                       <span className="text-xs text-error">
@@ -245,10 +241,6 @@ const CarRegisModal = ({
                       className={`w-full border p-2 rounded ${
                         errors.vip_days ? "border-red-500" : ""
                       }`}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        handleInputChange("vip_days", value);
-                      }}
                     />
                     {errors.vip_days && (
                       <span className="text-xs text-error">
@@ -269,9 +261,9 @@ const CarRegisModal = ({
                   <button
                     type="submit"
                     className={`px-4 py-2 text-white rounded-lg w-[150px] h-[49px] ${
-                      isAnyFieldFilled ? "bg-primary" : "bg-gray-200"
+                      isAnyFieldFilled && isValid ? "bg-primary" : "bg-gray-200"
                     }`}
-                    disabled={!isAnyFieldFilled || isLoading}
+                    disabled={!isAnyFieldFilled || !isValid || isLoading}
                   >
                     {isLoading ? "กำลังดำเนินการ..." : "ลงทะเบียนรถ"}
                   </button>

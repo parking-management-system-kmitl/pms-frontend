@@ -136,7 +136,7 @@ export default function RegisPaymentPage() {
             </div>
           </div>
 
-          <div className="w-full flex justify-center items-center mt-6">
+          {/* <div className="w-full flex justify-center items-center mt-6">
             <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
               <button 
                 onClick={handleDownloadQR}
@@ -147,7 +147,7 @@ export default function RegisPaymentPage() {
               </button>
               <p className="mt-2 text-sm">บันทึก QR</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       
