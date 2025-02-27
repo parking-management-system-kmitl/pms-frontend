@@ -109,9 +109,6 @@ export default function RegisPaymentPage() {
 
         <div className="w-[358px] h-[356px]">
           <div className="border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-auto items-center">
-            <div className="flex justify-center items-center h-[57px] w-full rounded-tr-[20px] rounded-tl-[20px] bg-[#113E68]">
-              <img src={ThaiQR} alt="thai_qr" className="w-[100px]" />
-            </div>
             <div className="flex flex-col justify-center items-center h-auto w-full rounded-[20px] p-6 bg-white">
               {qrCodeUrl ? (
                 <img src={qrCodeUrl} alt="QR Code" className="w-[186px]" />
