@@ -16,7 +16,6 @@ export default function RegisPaymentPage() {
   const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [chargeId, setChargeId] = useState("");
 
   const initialTime = 15 * 60;
   const [timeLeft, setTimeLeft] = useState(initialTime);
@@ -30,7 +29,6 @@ export default function RegisPaymentPage() {
 
         if (response.data.qrCodeUrl) {
           setQrCodeUrl(`${publicUrl}${response.data.qrCodeUrl}`);
-          setChargeId(response.data.chargeId);
         }
       } catch (err) {
         setError("ไม่สามารถสร้าง QR Code ได้ กรุณาลองใหม่อีกครั้ง");
@@ -138,7 +136,7 @@ export default function RegisPaymentPage() {
             </div>
           </div>
 
-          <div className="w-full flex justify-center items-center mt-6">
+          {/* <div className="w-full flex justify-center items-center mt-6">
             <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
               <button 
                 onClick={handleDownloadQR}
@@ -149,7 +147,7 @@ export default function RegisPaymentPage() {
               </button>
               <p className="mt-2 text-sm">บันทึก QR</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       

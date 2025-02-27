@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,43 +23,65 @@ function ListVipTable() {
   const [isLoading, setIsLoading] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
+  // สร้าง ref เพื่อเก็บสถานะว่ากำลังโหลดข้อมูลอยู่หรือไม่
+  const isLoadingRef = useRef(false);
+  // สร้าง ref เพื่อเก็บ AbortController สำหรับยกเลิก fetch request ที่ยังไม่เสร็จ
+  const abortControllerRef = useRef(null);
+
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetchVipData();
-  }, [page, searchQuery]);
+  // ย้าย token และ headers ออกจาก component state เพื่อไม่ให้ทริกเกอร์การ re-render
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("access_token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
-  const fetchVipData = async () => {
+  const fetchVipData = useCallback(async () => {
+    // ถ้ากำลังโหลดข้อมูลอยู่แล้ว ให้ยกเลิก request เก่าก่อน
+    if (isLoadingRef.current) {
+      abortControllerRef.current?.abort();
+    }
+
+    // สร้าง AbortController ใหม่
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    // ตั้งค่าสถานะกำลังโหลด
+    isLoadingRef.current = true;
     setIsLoading(true);
-    try {
-      let response;
 
-      // Determine if we should use search endpoint based on searchQuery
+    try {
+      const headers = getAuthHeaders();
+      let response;
       const isSearching = searchQuery && searchQuery.trim().length > 0;
 
       if (isSearching) {
-        // Use search API endpoint
         response = await fetch(`${apiUrl}/vip/search`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: headers,
           body: JSON.stringify({
             licensePlate: searchQuery,
             page,
             limit: ITEMS_PER_PAGE,
           }),
+          signal, // ใช้ AbortController signal
         });
       } else {
-        // Use regular endpoint
         response = await fetch(
           `${apiUrl}/vip/getvip?page=${page}&limit=${ITEMS_PER_PAGE}`,
           {
             method: "GET",
-            headers: { "Content-Type": "application/json" },
+            headers: headers,
+            signal, // ใช้ AbortController signal
           }
         );
       }
+
+      // ตรวจสอบว่า request ถูกยกเลิกหรือไม่
+      if (signal.aborted) return;
 
       const result = await response.json();
 
@@ -68,11 +90,33 @@ function ListVipTable() {
         setTotal(result.total);
       }
     } catch (error) {
-      console.error("Error fetching VIP data:", error);
+      // ไม่แสดง error ถ้าเป็นการยกเลิก request
+      if (error.name !== "AbortError") {
+        console.error("Error fetching VIP data:", error);
+      }
     } finally {
+      // อัปเดตสถานะการโหลดเมื่อเสร็จสิ้น
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  };
+  }, [apiUrl, page, searchQuery]); // ลบ headers ออกจาก dependency array
+
+  // ใช้ useEffect เพื่อจัดการการยกเลิก request เมื่อ component unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  // useEffect สำหรับเรียกข้อมูล
+  useEffect(() => {
+    // เพิ่ม debounce เพื่อลดการเรียก API ถี่เกินไป
+    const timer = setTimeout(() => {
+      fetchVipData();
+    }, 300); // รอ 300ms ก่อนเรียก API
+
+    return () => clearTimeout(timer);
+  }, [fetchVipData]);
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
@@ -120,13 +164,21 @@ function ListVipTable() {
 
   // ฟังก์ชันสำหรับแสดงหน้าปัจจุบันและหน้าทั้งหมด
   const getCurrentPageDisplay = () => {
-    const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(total / ITEMS_PER_PAGE) || 1;
     return `หน้า ${page} จาก ${totalPages}`;
   };
 
   // เช็คว่าปุ่มเลื่อนหน้าถูก disable หรือไม่
   const isPrevButtonDisabled = page === 1;
   const isNextButtonDisabled = page >= Math.ceil(total / ITEMS_PER_PAGE);
+
+  // สร้างฟังก์ชันที่จะส่งต่อให้ Modal components เพื่อดึงข้อมูลใหม่หลังจากการอัปเดต
+  const refreshData = () => {
+    // หน่วงเวลาเล็กน้อยเพื่อให้ API มีเวลาอัปเดตข้อมูลในฐานข้อมูล
+    setTimeout(() => {
+      fetchVipData();
+    }, 500);
+  };
 
   return (
     <>
@@ -267,10 +319,7 @@ function ListVipTable() {
               <div className="relative">
                 <select
                   value={ITEMS_PER_PAGE}
-                  onChange={(e) => {
-                    // This would need a proper implementation to change items per page
-                    console.log("Items per page changed:", e.target.value);
-                  }}
+                  onChange={(e) => {}}
                   className="text-sm py-1 appearance-none px-2 border border-gray-300 rounded-md w-[50px]"
                 >
                   {[5, 10, 15, 20].map((option) => (
@@ -326,7 +375,8 @@ function ListVipTable() {
         isOpen={isFormOpen}
         handleClose={handleCloseForm}
         vipId={vipId}
-        fetchVipData={fetchVipData}
+        fetchVipData={refreshData}
+        getAuthHeaders={getAuthHeaders}
       />
       <CarRegisModal
         isOpen={isCarRegisOpen}
@@ -334,7 +384,8 @@ function ListVipTable() {
         onSubmit={handleCarRegister}
         formData={formData}
         setFormData={setFormData}
-        fetchVipData={fetchVipData}
+        fetchVipData={refreshData}
+        getAuthHeaders={getAuthHeaders}
       />
       <VipEditModal
         isOpen={isVipEditOpen}
@@ -342,6 +393,8 @@ function ListVipTable() {
         vipId={vipId}
         formData={formData}
         setFormData={setFormData}
+        getAuthHeaders={getAuthHeaders}
+        onSuccess={refreshData}
       />
       <CarRegisEditModal
         isOpen={isCarRegisEditOpen}
@@ -349,7 +402,8 @@ function ListVipTable() {
         vipId={vipId}
         carData={carData}
         setCarData={setCarData}
-        fetchVipData={fetchVipData}
+        fetchVipData={refreshData}
+        getAuthHeaders={getAuthHeaders}
       />
     </>
   );

@@ -17,6 +17,8 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
       return;
     }
 
+    const token = localStorage.getItem("access_token");
+
     const submitData = {
       vip_days: parseInt(formData.extend_days) || 0,
       f_name: formData.fname,
@@ -28,6 +30,7 @@ const VipEditModal = ({ isOpen, onClose, vipId, formData, setFormData }) => {
       const response = await axios.put(apiUrl, submitData, {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       });
 

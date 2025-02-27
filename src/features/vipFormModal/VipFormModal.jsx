@@ -9,66 +9,86 @@ import axios from "axios";
 // Schema validation
 const schema = yup
   .object({
-    firstName: yup.string().required("First name is required"),
-    lastName: yup.string().required("Last name is required"),
+    firstName: yup.string().required("กรุณากรอกชื่อ"),
+    lastName: yup.string().required("กรุณากรอกนามสกุล"),
     tel: yup
       .string()
-      .matches(/^[0-9]+$/, "Tel must be only digits")
-      .min(10, "Tel must be at least 10 digits")
-      .required("Tel is required"),
+      .required("กรุณากรอกหมายเลขโทรศัพท์")
+      .matches(/^[0-9]+$/, "หมายเลขโทรศัพท์ต้องเป็นตัวเลขเท่านั้น")
+      .min(10, "หมายเลขโทรศัพท์ต้องเป็นเลข 10 หลัก")
+      .max(10, "หมายเลขโทรศัพท์ต้องเป็นเลข 10 หลัก"),
     vipDuration: yup
       .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
+      .required("กรุณาระบุอายุสมาชิก VIP")
       .positive("ต้องเป็นจำนวนที่มากกว่า 0")
-      .integer("ต้องเป็นเลขจำนวนเต็ม")
-      .required("กรุณาระบุอายุสมาชิก VIP"),
+      .integer("ต้องเป็นเลขจำนวนเต็ม"),
   })
   .required();
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
+// Helper function to get authentication headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("access_token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+};
+
 function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
-  const [showNextModal, setShowNextModal] = useState(false);
+  const [showRegisterCar, setShowRegisterCar] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [memberId, setMemberId] = useState(null);
   const [formData, setFormData] = useState({
     fname: "",
     lname: "",
     tel: "",
     vip_days: "",
   });
+  const [licensePlate, setLicensePlate] = useState("");
+  const [licensePlateError, setLicensePlateError] = useState("");
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, isValid },
+    reset,
+    watch,
   } = useForm({
     resolver: yupResolver(schema),
+    mode: "onChange", // This enables real-time validation
   });
+
+  // Watch form values
+  const watchedFields = watch();
 
   const onSubmit = async (data) => {
     try {
-      // First, register the member
-      const registerResponse = await axios.post(`${apiUrl}/member/register`, {
-        f_name: data.firstName,
-        l_name: data.lastName,
-        phone: data.tel,
-      });
+      const registerResponse = await axios.post(
+        `${apiUrl}/member/register`,
+        {
+          f_name: data.firstName,
+          l_name: data.lastName,
+          phone: data.tel,
+        },
+        { headers: getAuthHeaders() } // Add authentication headers
+      );
 
       if (!registerResponse.data.status) {
         setErrorMessage(registerResponse.data.message);
         return;
       }
 
-      setMemberId(registerResponse.data.member_id);
       setFormData({
         fname: data.firstName,
         lname: data.lastName,
         tel: data.tel,
         vip_days: data.vipDuration,
       });
-      setShowNextModal(true);
-      handleClose();
+      setShowRegisterCar(true);
+      setErrorMessage("");
     } catch (error) {
       console.error("Error during member registration:", error);
       setErrorMessage(
@@ -78,33 +98,39 @@ function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
     }
   };
 
+  const validateLicensePlate = () => {
+    if (!licensePlate) {
+      setLicensePlateError("กรุณากรอกเลขทะเบียนรถ");
+      return false;
+    }
+    setLicensePlateError("");
+    return true;
+  };
+
   const handleRegister = async () => {
     try {
-      const licenseplate = document.querySelector(
-        'input[placeholder="กรอกเลขทะเบียน"]'
-      ).value;
-
-      if (!licenseplate) {
-        setErrorMessage("กรุณากรอกเลขทะเบียนรถ");
+      if (!validateLicensePlate()) {
         return;
       }
 
-      const linkResponse = await axios.post(`${apiUrl}/member/link-car`, {
-        phone: formData.tel,
-        licenseplate: licenseplate,
-        vip_days: formData.vip_days,
-      });
+      const linkResponse = await axios.post(
+        `${apiUrl}/member/link-car`,
+        {
+          phone: formData.tel,
+          licenseplate: licensePlate,
+          vip_days: formData.vip_days,
+        },
+        { headers: getAuthHeaders() } // Add authentication headers
+      );
 
       if (linkResponse.data.message === "Car linked successfully") {
         setSuccessMessage("สมัครสมาชิกและลงทะเบียนรถสำเร็จ!");
-        
-        // รีเฟรชข้อมูลในตาราง
+
         setTimeout(() => {
-          if (typeof fetchVipData === 'function') {
-            fetchVipData(1); // กลับไปหน้าแรกหลังลงทะเบียนสำเร็จ
+          if (typeof fetchVipData === "function") {
+            fetchVipData(1);
           }
-          setShowNextModal(false);
-          setSuccessMessage("");
+          handleCloseWithReset();
         }, 2000);
       }
     } catch (error) {
@@ -119,7 +145,26 @@ function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
     }
   };
 
-  const closeNextModal = () => setShowNextModal(false);
+  const handleCloseWithReset = () => {
+    reset();
+    setFormData({
+      fname: "",
+      lname: "",
+      tel: "",
+      vip_days: "",
+    });
+    setLicensePlate("");
+    setLicensePlateError("");
+    setErrorMessage("");
+    setSuccessMessage("");
+    setShowRegisterCar(false);
+    handleClose();
+  };
+
+  const handleBack = () => {
+    setShowRegisterCar(false);
+    setErrorMessage("");
+  };
 
   return (
     <>
@@ -127,199 +172,206 @@ function VipFormModal({ isOpen, handleClose, vipId, fetchVipData }) {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-lg w-[779px]">
             <div className="w-full flex justify-end w-[150px] h-[49px]">
-              <button onClick={handleClose}>
+              <button onClick={handleCloseWithReset}>
                 <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
               </button>
             </div>
 
             <div
               className={`w-full flex flex-col justify-start ${
-                vipId ? " items-start" : "items-center"
+                vipId ? "items-start" : "items-center"
               }`}
             >
               {!vipId && (
                 <img src={vip} alt="vip" className="w-[180px] h-[180px]" />
               )}
               <h2 className="text-3xl font-bold">
-                {vipId ? "รายละเอียดสมาชิก VIP" : "สมัครสมาชิก VIP"}
+                {vipId
+                  ? "รายละเอียดสมาชิก VIP"
+                  : showRegisterCar
+                  ? "รายละเอียดรถ"
+                  : "สมัครสมาชิก VIP"}
               </h2>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="space-y-4 pt-6">
-                <div className="flex justify-between gap-6">
-                  <div className="w-full">
-                    <label className="block text-gray-700 mb-2">ชื่อ</label>
-                    <input
-                      {...register("firstName")}
-                      type="text"
-                      placeholder="ชื่อภาษาไทย"
-                      className="w-full border p-2 rounded"
-                    />
-                    {errors.firstName && (
-                      <span className="text-xs text-error">
-                        {errors.firstName.message}
-                      </span>
-                    )}
+            {/* แสดง error message */}
+            {errorMessage && (
+              <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                <p className="text-center">{errorMessage}</p>
+              </div>
+            )}
+
+            {/* แสดง success message */}
+            {successMessage && (
+              <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                <p className="text-center">{successMessage}</p>
+              </div>
+            )}
+
+            {!showRegisterCar ? (
+              /* แบบฟอร์มสมัครสมาชิก */
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="space-y-4 pt-6">
+                  <div className="flex justify-between gap-6">
+                    <div className="w-full">
+                      <label className="block text-gray-700 mb-2">ชื่อ</label>
+                      <input
+                        {...register("firstName")}
+                        type="text"
+                        placeholder="ชื่อภาษาไทย"
+                        className={`w-full border p-2 rounded ${
+                          errors.firstName ? "border-red-500" : ""
+                        }`}
+                      />
+                      {errors.firstName && (
+                        <span className="text-xs text-error">
+                          {errors.firstName.message}
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-full">
+                      <label className="block text-gray-700 mb-2">
+                        นามสกุล
+                      </label>
+                      <input
+                        {...register("lastName")}
+                        type="text"
+                        placeholder="นามสกุลภาษาไทย"
+                        className={`w-full border p-2 rounded ${
+                          errors.lastName ? "border-red-500" : ""
+                        }`}
+                      />
+                      {errors.lastName && (
+                        <span className="text-xs text-error">
+                          {errors.lastName.message}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="w-full">
-                    <label className="block text-gray-700 mb-2">นามสกุล</label>
-                    <input
-                      {...register("lastName")}
-                      type="text"
-                      placeholder="นามสกุลภาษาไทย"
-                      className="w-full border p-2 rounded"
-                    />
-                    {errors.lastName && (
-                      <span className="text-xs text-error">
-                        {errors.lastName.message}
-                      </span>
-                    )}
+
+                  <div className="flex justify-between gap-6">
+                    <div className="w-full">
+                      <label className="block text-gray-700 mb-2">
+                        เบอร์ติดต่อ
+                      </label>
+                      <input
+                        {...register("tel")}
+                        type="text"
+                        placeholder="กรอกเบอร์ติดต่อ"
+                        className={`w-full border p-2 rounded ${
+                          errors.tel ? "border-red-500" : ""
+                        }`}
+                      />
+                      {errors.tel && (
+                        <span className="text-xs text-error">
+                          {errors.tel.message}
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-full">
+                      <label className="block text-gray-700 mb-2">
+                        อายุสมาชิก VIP (วัน)
+                      </label>
+                      <input
+                        {...register("vipDuration")}
+                        type="number"
+                        placeholder="กรอกจำนวนวัน"
+                        className={`w-full border p-2 rounded ${
+                          errors.vipDuration ? "border-red-500" : ""
+                        }`}
+                      />
+                      {errors.vipDuration && (
+                        <span className="text-xs text-error">
+                          {errors.vipDuration.message}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-6">
-                  <div className="w-full">
+                <div className="mt-6 flex gap-4 justify-end">
+                  <button
+                    className="bg-gray-200 px-4 py-2 text-black rounded-lg w-[150px] h-[49px]"
+                    onClick={handleCloseWithReset}
+                    type="button"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    className={`px-4 py-2 text-white rounded-lg w-[150px] h-[49px] ${
+                      isValid ? "bg-primary" : "bg-gray-200"
+                    }`}
+                    disabled={!isValid}
+                  >
+                    ต่อไป
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* แบบฟอร์มลงทะเบียนรถ */
+              <div>
+                <div className="space-y-4 pt-6">
+                  <div>
                     <label className="block text-gray-700 mb-2">
                       เบอร์ติดต่อ
                     </label>
                     <input
-                      {...register("tel")}
                       type="text"
-                      placeholder="กรอกเบอร์ติดต่อ"
-                      className="w-full border p-2 rounded"
+                      value={formData.tel}
+                      readOnly
+                      className="w-full border p-2 rounded bg-gray-100"
                     />
-                    {errors.tel && (
-                      <span className="text-xs text-error">
-                        {errors.tel.message}
-                      </span>
-                    )}
                   </div>
-                  <div className="w-full">
+
+                  <div>
                     <label className="block text-gray-700 mb-2">
-                      อายุสมาชิก VIP (วัน)
+                      เลขทะเบียนรถ
                     </label>
                     <input
-                      {...register("vipDuration")}
-                      type="number"
-                      placeholder="กรอกจำนวนวัน"
-                      className="w-full border p-2 rounded"
+                      type="text"
+                      placeholder="กรอกเลขทะเบียน"
+                      className={`w-full border p-2 rounded ${
+                        licensePlateError ? "border-red-500" : ""
+                      }`}
+                      value={licensePlate}
+                      onChange={(e) => {
+                        setLicensePlate(e.target.value);
+                        if (e.target.value) {
+                          setLicensePlateError("");
+                        }
+                      }}
+                      onBlur={validateLicensePlate}
                     />
-                    {errors.vipDuration && (
+                    {licensePlateError && (
                       <span className="text-xs text-error">
-                        {errors.vipDuration.message}
+                        {licensePlateError}
                       </span>
                     )}
                   </div>
                 </div>
+
+                <div className="mt-6 flex gap-4 justify-end">
+                  <button
+                    className="bg-gray-200 px-4 py-2 text-black rounded-lg w-[150px] h-[49px]"
+                    onClick={handleBack}
+                    type="button"
+                  >
+                    ย้อนกลับ
+                  </button>
+                  <button
+                    className={`px-4 py-2 text-white rounded-lg w-[150px] h-[49px] ${
+                      licensePlate ? "bg-primary" : "bg-gray-200"
+                    }`}
+                    onClick={handleRegister}
+                    type="button"
+                    disabled={!licensePlate}
+                  >
+                    สมัครสมาชิก
+                  </button>
+                </div>
               </div>
-
-              <div className="mt-6 flex gap-4 justify-end">
-                <button
-                  className="bg-gray-200 px-4 py-2 text-black rounded-lg w-[150px] h-[49px]"
-                  onClick={handleClose}
-                  type="button"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  className={`px-4 py-2 text-white rounded-lg w-[150px] h-[49px] ${
-                    isDirty ? "bg-primary" : "bg-gray-200"
-                  }`}
-                  disabled={!isDirty}
-                >
-                  ต่อไป
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showNextModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg w-[779px]">
-            <div className="w-full flex justify-end">
-              <button onClick={closeNextModal}>
-                <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
-              </button>
-            </div>
-
-            <div className="w-full flex flex-col justify-center items-center mb-6">
-              <img src={vip} alt="vip" className="w-[180px] h-[180px]" />
-              <h2 className="text-3xl font-bold">รายละเอียดรถ</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-700 mb-2">เบอร์ติดต่อ</label>
-                <input
-                  type="text"
-                  value={formData.tel}
-                  readOnly
-                  className="w-full border p-2 rounded bg-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 mb-2">เลขทะเบียนรถ</label>
-                <input
-                  type="text"
-                  placeholder="กรอกเลขทะเบียน"
-                  className="w-full border p-2 rounded"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex gap-4 justify-end">
-              <button
-                className="bg-gray-200 px-4 py-2 text-black rounded-lg w-[150px] h-[49px]"
-                onClick={closeNextModal}
-              >
-                ยกเลิก
-              </button>
-              <button
-                className="bg-primary px-4 py-2 text-white rounded-lg w-[150px] h-[49px]"
-                onClick={handleRegister}
-              >
-                สมัครสมาชิก
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {errorMessage && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg w-[400px]">
-            <div className="w-full flex justify-end">
-              <button onClick={() => setErrorMessage("")}>
-                <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
-              </button>
-            </div>
-            <div className="text-center">
-              <h2 className="text-xl font-bold text-error">เกิดข้อผิดพลาด</h2>
-              <p className="mt-4 text-sm text-gray-700">{errorMessage}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg w-[400px]">
-            <div className="w-full flex justify-end">
-              <button onClick={() => setSuccessMessage("")}>
-                <XCircleIcon className="w-8 h-8 text-primary hover:text-error" />
-              </button>
-            </div>
-            <div className="text-center">
-              <h2 className="text-xl font-bold text-primary">
-                สมัครสมาชิกสำเร็จ
-              </h2>
-              <p className="mt-4 text-sm text-gray-700">{successMessage}</p>
-            </div>
+            )}
           </div>
         </div>
       )}

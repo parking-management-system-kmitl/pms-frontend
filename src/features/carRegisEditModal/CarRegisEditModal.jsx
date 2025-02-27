@@ -3,7 +3,14 @@ import axios from "axios";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 
-const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData, fetchVipData }) => {
+const CarRegisEditModal = ({
+  isOpen,
+  onClose,
+  vipId,
+  carData,
+  setCarData,
+  fetchVipData,
+}) => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [statusType, setStatusType] = useState("");
   const [licensePlates, setLicensePlates] = useState({});
@@ -23,24 +30,36 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData, fetchV
 
   const apiUrl = `${process.env.REACT_APP_API_URL}`;
 
+  // Get authentication token from localStorage
+  const token = localStorage.getItem("access_token");
+  // Set up headers with token
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+
   const handleDeleteCar = async (carId) => {
     try {
-      const response = await axios.post(`${apiUrl}/member/unlink-car`, {
-        car_id: carId,
-      });
+      const response = await axios.post(
+        `${apiUrl}/member/unlink-car`,
+        {
+          car_id: carId,
+        },
+        { headers } // Add headers with token
+      );
 
       if (response.data.success) {
         setCarData((prevData) =>
           prevData.filter((car) => car.car_id !== carId)
         );
-        
+
         if (fetchVipData) {
           fetchVipData(1);
         }
         handleClose();
         setStatusMessage("ยกเลิกการเชื่อมต่อรถสำเร็จ!");
         setStatusType("success");
-        
+
         // Close the modal after successful deletion
         setTimeout(() => {
           onClose();
@@ -69,9 +88,13 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData, fetchV
     }
 
     try {
-      const response = await axios.put(`${apiUrl}/vip/updatelp/${car.car_id}`, {
-        license_plate: newLicensePlate,
-      });
+      const response = await axios.put(
+        `${apiUrl}/vip/updatelp/${car.car_id}`,
+        {
+          license_plate: newLicensePlate,
+        },
+        { headers } // Add headers with token
+      );
 
       if (response.status === 200) {
         // Update the local state with the new license plate
@@ -82,12 +105,12 @@ const CarRegisEditModal = ({ isOpen, onClose, vipId, carData, setCarData, fetchV
               : c
           )
         );
-        
+
         // Fetch updated data using the fetchVipData function from ListVipTable
         if (fetchVipData) {
           fetchVipData(1); // Refresh data from the first page or current page
         }
-        
+
         // Close the modal after successful update
         onClose();
       }

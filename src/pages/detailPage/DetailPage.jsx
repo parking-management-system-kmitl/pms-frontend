@@ -16,7 +16,6 @@ function DetailPage() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedDiscount, setSelectedDiscount] = useState("");
   const [data, setData] = useState([]);
-  const [totalRows, setTotalRows] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState("ทั้งหมด");
@@ -89,10 +88,15 @@ function DetailPage() {
       let requestBody = null;
       let response;
       
-      // Determine if we should use search endpoints based on searchQuery
+      const token = localStorage.getItem('access_token');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      
       const isSearching = searchQuery && searchQuery.trim().length > 0;
       
-      // Build the URL or request based on the selected tab and whether we're searching
       if (selected === "รถเข้า") {
         if (isSearching) {
           url = `${apiUrl}/parking/entry-records/search`;
@@ -116,7 +120,6 @@ function DetailPage() {
           url = `${apiUrl}/parking/entry-exit-records?page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
         }
       } else {
-        // For "ทั้งหมด" tab
         if (isSearching) {
           url = `${apiUrl}/parking/all-records/search`;
           requestBody = {
@@ -131,17 +134,17 @@ function DetailPage() {
         }
       }
   
-      // Make the appropriate request based on whether we're searching or not
       if (isSearching) {
         response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: headers,
           body: JSON.stringify(requestBody),
         });
       } else {
-        response = await fetch(url);
+        response = await fetch(url, {
+          method: 'GET',
+          headers: headers
+        });
       }
   
       const result = await response.json();
@@ -203,8 +206,7 @@ function DetailPage() {
       setData(formattedData);
   
       // Update pagination information
-      const { total, totalPages } = extractPaginationInfo(result);
-      setTotalRows(total);
+      const { totalPages } = extractPaginationInfo(result);
       setPageCount(totalPages);
     } catch (error) {
       console.error("Error fetching data:", error);

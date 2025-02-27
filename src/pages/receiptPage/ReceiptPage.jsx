@@ -1,7 +1,7 @@
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import React, { useRef, useEffect, useState } from "react";
 import receipt from "../../assets/Receipt.png";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import html2canvas from "html2canvas";
 
 const formatDate = (dateString) => {
@@ -31,7 +31,6 @@ function ReceiptPage() {
   useEffect(() => {
     const fetchPaymentData = async () => {
       try {
-        // Update the API URL to include the base URL from environment variable
         const response = await fetch(
           `${process.env.REACT_APP_API_URL}/parking/lastestpaymenthistory/${licensePlate}`,
           {
@@ -98,12 +97,14 @@ function ReceiptPage() {
     );
   }
 
-  // Calculate time limit for exit (1 hour after payment)
-  const exitTimeLimit = paymentData?.latestPayment?.paidAt
-    ? new Date(
-        new Date(paymentData.latestPayment.paidAt).getTime() + 60 * 60 * 1000
-      )
-    : null;
+  const exitTimeLimit =
+    paymentData?.latestPayment?.paidAt &&
+    paymentData?.latestPayment?.exitBufferTime
+      ? new Date(
+          new Date(paymentData.latestPayment.paidAt).getTime() +
+            parseFloat(paymentData.latestPayment.exitBufferTime) * 60 * 1000
+        )
+      : null;
 
   return (
     <div>
@@ -187,7 +188,7 @@ function ReceiptPage() {
             </div>
           </div>
         </div>
-
+{/* 
         <div className="w-full flex justify-center items-center mt-6">
           <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
             <button
@@ -198,6 +199,13 @@ function ReceiptPage() {
             </button>
             <p className="mt-2 text-sm">บันทึกใบเสร็จ</p>
           </div>
+        </div> */}
+
+        {/* VIP Registration Link */}
+        <div className="w-full flex justify-center items-center mt-4 mb-6">
+          <Link to="/regisVip" className="text-blue-500 text-sm underline">
+            สมัครสมาชิก VIP
+          </Link>
         </div>
       </div>
     </div>
