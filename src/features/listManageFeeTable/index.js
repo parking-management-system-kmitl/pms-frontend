@@ -1,3 +1,3 @@
-import ListManageFeeTable from "./LlistManageFeeTable";
+import ListManageFeeTable from "./ListManageFeeTable";
 
 export { ListManageFeeTable };

@@ -33,7 +33,7 @@ const Dashboard = () => {
   const [endDate, setEndDate] = useState(new Date());
   const [tempStartDate, setTempStartDate] = useState(new Date());
   const [tempEndDate, setTempEndDate] = useState(new Date());
-  const [selectedRange, setSelectedRange] = useState(null);
+  const [selectedRange, setSelectedRange] = useState("วันนี้");
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -184,7 +184,7 @@ const Dashboard = () => {
         setError(null);
 
         const adjustedStartDate = new Date(start);
-        adjustedStartDate.setHours(7, 0, 0, 0);
+        adjustedStartDate.setHours(0, 0, 0, 0);
 
         const adjustedEndDate = new Date(end);
         adjustedEndDate.setHours(23, 59, 59, 999);

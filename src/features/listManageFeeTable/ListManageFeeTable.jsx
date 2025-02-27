@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { XCircleIcon } from "@heroicons/react/24/solid";
+import alertIcon from "../../assets/Alert_Icon.png"; // Make sure this path is correct
 
-function LlistManageFeeTable() {
+function ListManageFeeTable() {
   const [page, setPage] = useState(1);
   const [parkingRates, setParkingRates] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -14,6 +15,10 @@ function LlistManageFeeTable() {
     rate_at_hour: "",
   });
   const [isEditingCondition, setIsEditingCondition] = useState(false);
+
+  // Add delete confirmation modal state
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [deleteData, setDeleteData] = useState(null);
 
   // Parking options state variables
   const [parkingOptions, setParkingOptions] = useState({
@@ -202,8 +207,14 @@ function LlistManageFeeTable() {
     }
   };
 
-  const handleDeleteClick = async (hours) => {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/rates/${hours}`;
+  // Modified: Separate click and confirm functions for delete
+  const handleDeleteClick = (hours) => {
+    setDeleteData(hours);
+    setShowDeletePopup(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    const apiUrl = `${process.env.REACT_APP_API_URL}/configuration/rates/${deleteData}`;
     try {
       const response = await fetch(apiUrl, {
         method: "DELETE",
@@ -213,7 +224,7 @@ function LlistManageFeeTable() {
       const data = await response.json();
       if (data.status === 200) {
         const updatedRates = parkingRates.filter(
-          (rate) => rate.hours !== hours
+          (rate) => rate.hours !== deleteData
         );
         setParkingRates(updatedRates);
 
@@ -221,6 +232,8 @@ function LlistManageFeeTable() {
         if (page > newPageCount && newPageCount > 0) {
           setPage(newPageCount);
         }
+        
+        setShowDeletePopup(false);
       } else {
         console.error("Failed to delete parking rate:", data.message);
       }
@@ -475,7 +488,7 @@ function LlistManageFeeTable() {
                 htmlFor="rate_at_hour"
                 className="block text-sm font-medium mb-1"
               >
-                อัตราค่าจอดต่อชั่วโมง (บาท)
+                อัตราค่าบริการ (บาท/ชั่วโมง)
               </label>
               <input
                 type="number"
@@ -508,6 +521,34 @@ function LlistManageFeeTable() {
         </div>
       )}
 
+      {/* Delete confirmation popup - Added this section */}
+      {showDeletePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-1/3">
+            <div className="flex flex-col justify-center items-center">
+              <img className="w-[120px] h-[120px] mb-6 mt-6" src={alertIcon} alt="alert-icon" />
+              <p className="text-2xl font-medium">
+                คุณต้องการที่จะลบรายการนี้?
+              </p>
+            </div>
+            <div className="flex justify-center gap-6 mt-6 mb-4">
+              <button
+                onClick={() => setShowDeletePopup(false)}
+                className="bg-gray-300 px-4 py-2 rounded-lg w-[150px] h-[49px]"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg w-[150px] h-[49px]"
+              >
+                ตกลง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end items-center mt-4 gap-6">
         <p className="text-sm font-thin">{getPaginationText()}</p>
         <div className="flex gap-3">
@@ -531,4 +572,4 @@ function LlistManageFeeTable() {
   );
 }
 
-export default LlistManageFeeTable;
+export default ListManageFeeTable;

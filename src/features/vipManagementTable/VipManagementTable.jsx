@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { XCircleIcon } from "@heroicons/react/24/solid";
+import alertIcon from "../../assets/Alert_Icon.png";
 
 function VIPPromotionsTable() {
   const [page, setPage] = useState(1);
@@ -438,20 +439,24 @@ function VIPPromotionsTable() {
       {showDeletePopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">ยืนยันการลบ</h2>
-            <p>คุณแน่ใจหรือไม่ที่จะลบโปรโมชั่นนี้?</p>
-            <div className="flex justify-end gap-3 mt-4">
+            <div className="flex flex-col justify-center items-center">
+              <img className="w-[120px] h-[120px] mb-6 mt-6" src={alertIcon} alt="alert-icon" />
+              <p className="text-2xl font-medium">
+                คุณต้องการที่จะลบรายการนี้?
+              </p>
+            </div>
+            <div className="flex justify-center gap-6 mt-6 mb-4">
               <button
                 onClick={() => setShowDeletePopup(false)}
-                className="bg-gray-300 px-4 py-2 rounded-lg w-[80px]"
+                className="bg-gray-300 px-4 py-2 rounded-lg w-[150px] h-[49px]"
               >
                 ยกเลิก
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="bg-red-500 text-white px-4 py-2 rounded-lg w-[80px]"
+                className="bg-red-500 text-white px-4 py-2 rounded-lg w-[150px] h-[49px]"
               >
-                ลบ
+                ตกลง
               </button>
             </div>
           </div>
