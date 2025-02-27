@@ -245,7 +245,7 @@ function LandingPage() {
         </div>
       </div>
       {(needNewPayment || (parkingData && parkingData.needNewPayment)) && (
-        <div className="flex flex-col justify-center items-end space-y-4 w-full absolute bottom-0 p-5 border-t-[0.5px] border-gray-300">
+        <div className="flex flex-col justify-center items-center space-y-4 w-full absolute bottom-0 p-5 border-t-[0.5px] border-gray-300">
           <button
             onClick={handlePayment}
             disabled={!isPaymentEnabled}
@@ -257,6 +257,7 @@ function LandingPage() {
           >
             ชำระเงิน
           </button>
+          <a href="/regisVip" className="text-blue-500 text-sm underline">สมาชิก VIP</a>
         </div>
       )}
     </div>
