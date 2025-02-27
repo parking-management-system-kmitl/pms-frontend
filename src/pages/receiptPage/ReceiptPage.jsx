@@ -5,6 +5,7 @@ import { useParams, Link } from "react-router-dom";
 import html2canvas from "html2canvas";
 
 const formatDate = (dateString) => {
+  if (!dateString) return "-";
   const date = new Date(dateString);
   return date.toLocaleDateString("th-TH", {
     day: "2-digit",
@@ -14,6 +15,7 @@ const formatDate = (dateString) => {
 };
 
 const formatTime = (dateString) => {
+  if (!dateString) return "-";
   const date = new Date(dateString);
   return date.toLocaleTimeString("th-TH", {
     hour: "2-digit",
@@ -131,11 +133,17 @@ function ReceiptPage() {
               </p>
               <div className="w-full border-[0.5px] border-gray-300"></div>
               <p className="text-xs w-ful space-y-1">
-                <p>เลขทะเบียน: {paymentData?.licensePlate}</p>
-                <p>
-                  เวลาเข้า: {formatDate(paymentData?.latestPayment?.entryTime)}{" "}
-                  {formatTime(paymentData?.latestPayment?.entryTime)}
-                </p>
+                <div className="flex justify-between">
+                  <p>เลขทะเบียน:</p>
+                  <p> {paymentData?.licensePlate}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p>เวลาเข้า:</p>
+                  <p>
+                    {formatDate(paymentData?.entryTime)}{" "}
+                    {formatTime(paymentData?.entryTime)}
+                  </p>
+                </div>
                 {paymentData?.latestPayment?.exitTime && (
                   <p>
                     เวลาออก: {formatDate(paymentData?.latestPayment?.exitTime)}{" "}
@@ -188,18 +196,6 @@ function ReceiptPage() {
             </div>
           </div>
         </div>
-{/* 
-        <div className="w-full flex justify-center items-center mt-6">
-          <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
-            <button
-              className="rounded-2xl border-[0.5px] p-2 border-gray-300 w-8 h-8 flex justify-center items-center"
-              onClick={handleDownload}
-            >
-              <ArrowDownTrayIcon className="w-auto h-auto" />
-            </button>
-            <p className="mt-2 text-sm">บันทึกใบเสร็จ</p>
-          </div>
-        </div> */}
 
         {/* VIP Registration Link */}
         <div className="w-full flex justify-center items-center mt-4 mb-6">
