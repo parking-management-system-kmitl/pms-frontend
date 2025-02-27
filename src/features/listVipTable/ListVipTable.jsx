@@ -268,7 +268,9 @@ function ListVipTable() {
                   colSpan="7"
                   className="text-3xl px-4 py-[6rem] text-center text-gray-400"
                 >
-                  {searchQuery ? "ไม่พบป้ายทะเบียนที่ค้นหา" : "ไม่มีข้อมูล"}
+                  {searchQuery
+                    ? "ไม่พบป้ายทะเบียนที่ค้นหา"
+                    : "ไม่มีรายการสมาชิก VIP"}
                 </td>
               </tr>
             ) : (
