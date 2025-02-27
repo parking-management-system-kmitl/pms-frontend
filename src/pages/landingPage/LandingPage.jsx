@@ -257,7 +257,7 @@ function LandingPage() {
           >
             ชำระเงิน
           </button>
-          <a href="/regisVip" className="text-blue-500 text-sm underline">สมาชิก VIP</a>
+          <a href="/regisVip" className="text-blue-500 text-sm underline">สมัครสมาชิก VIP</a>
         </div>
       )}
     </div>
