@@ -56,7 +56,6 @@ function CarDetailModal({
     }
   }, [isVisible, carId, apiUrl]);
 
-  // Add new useEffect to fetch payment status
   useEffect(() => {
     const fetchPaymentStatus = async () => {
       if (!selectedRow || !selectedRow.car || !selectedRow.car.license_plate)
@@ -403,7 +402,7 @@ function CarDetailModal({
                   isUpdatingPayment ||
                   paymentStatus === "unpaid"
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-green-500 text-white hover:bg-green-600"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
                 }`}
                 disabled={
                   !needNewPayment ||
