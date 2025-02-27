@@ -42,6 +42,7 @@ export default function RegisVipPage() {
   const [vipCars, setVipCars] = useState([]);
   const [showAddCar, setShowAddCar] = useState(false);
   const [error, setError] = useState("");
+  const [duplicateLicenseError, setDuplicateLicenseError] = useState(false); // เพิ่ม state สำหรับเก็บสถานะความผิดพลาดทะเบียนซ้ำ
   const [phoneNumber, setPhoneNumber] = useState("");
   const [showModal, setShowModal] = useState(false);
 
@@ -80,6 +81,7 @@ export default function RegisVipPage() {
   const checkPhone = async (data) => {
     try {
       setError("");
+      setDuplicateLicenseError(false); // รีเซ็ตสถานะความผิดพลาดทะเบียนซ้ำ
       const phone = data.phone;
       setPhoneNumber(phone);
 
@@ -110,6 +112,7 @@ export default function RegisVipPage() {
   const registerMember = async (data) => {
     try {
       setError("");
+      setDuplicateLicenseError(false); // รีเซ็ตสถานะความผิดพลาดทะเบียนซ้ำ
       const prepareRegResponse = await axios.post(
         `${apiUrl}/member/preparereg`,
         {
@@ -136,6 +139,7 @@ export default function RegisVipPage() {
     } catch (error) {
       if (error.response?.status === 409) {
         setError("เลขทะเบียนรถนี้ถูกลงทะเบียนแล้ว");
+        setDuplicateLicenseError(true); // เซ็ตสถานะความผิดพลาดทะเบียนซ้ำเป็น true
       } else {
         setError("การสมัครสมาชิกไม่สำเร็จ");
       }
@@ -145,6 +149,7 @@ export default function RegisVipPage() {
   const addCarToVip = async (data) => {
     try {
       setError("");
+      setDuplicateLicenseError(false); // รีเซ็ตสถานะความผิดพลาดทะเบียนซ้ำ
       const response = await axios.post(`${apiUrl}/member/preparereg`, {
         phone: phoneNumber,
         licenseplate: data.licensePlate,
@@ -166,6 +171,8 @@ export default function RegisVipPage() {
     } catch (error) {
       if (error.response?.status === 409) {
         setError("เลขทะเบียนรถนี้ถูกลงทะเบียนแล้ว");
+        setDuplicateLicenseError(true); // เซ็ตสถานะความผิดพลาดทะเบียนซ้ำเป็น true
+        // ลบโค้ดเปิด modal เมื่อเกิดข้อผิดพลาด
       } else {
         setError("การเพิ่มรถไม่สำเร็จ");
       }
@@ -188,10 +195,10 @@ export default function RegisVipPage() {
           <div className="text-center mb-6 mt-[6rem]">
             <img src={vip} alt="VIP Icon" className="w-20 mx-auto mb-2" />
             <h1 className="text-xl font-bold">สมัครสมาชิก VIP</h1>
-            <p className="text-blue-500 text-sm font-medium">KMITL Parking</p>
+            <p className="text-sm font-medium">KMITL Parking</p>
             {isVip && (
               <div>
-                <p className="text-red-500 text-sm font-medium mt-2">
+                <p className="text-blue-500 text-sm font-medium mt-2">
                   หมายเลขนี้ได้เป็นสมาชิก VIP แล้ว
                 </p>
                 <p
@@ -285,13 +292,19 @@ export default function RegisVipPage() {
                 placeholder="กรอกเลขทะเบียน"
                 {...registerForm("licensePlate")}
                 className={`mb-1 w-full border p-2 rounded ${
-                  formErrors.licensePlate ? "border-red-500" : ""
+                  formErrors.licensePlate || duplicateLicenseError
+                    ? "border-red-500"
+                    : ""
                 }`}
               />
               {formErrors.licensePlate && (
                 <p className="text-red-500 text-xs mb-2">
                   {formErrors.licensePlate.message}
                 </p>
+              )}
+              {/* แสดงข้อความแจ้งเตือนทะเบียนซ้ำใต้ช่องกรอกทะเบียนรถในหน้าลงทะเบียน */}
+              {duplicateLicenseError && !formErrors.licensePlate && (
+                <p className="text-red-500 text-xs mb-2">{error}</p>
               )}
             </div>
           )}
@@ -320,7 +333,9 @@ export default function RegisVipPage() {
                     placeholder="กรอกเลขทะเบียน"
                     {...registerLicensePlate("licensePlate")}
                     className={`mb-1 w-full border p-2 rounded ${
-                      licensePlateErrors.licensePlate ? "border-red-500" : ""
+                      licensePlateErrors.licensePlate || duplicateLicenseError
+                        ? "border-red-500"
+                        : ""
                     }`}
                   />
                   {licensePlateErrors.licensePlate && (
@@ -328,6 +343,11 @@ export default function RegisVipPage() {
                       {licensePlateErrors.licensePlate.message}
                     </p>
                   )}
+                  {/* แสดงข้อความแจ้งเตือนทะเบียนซ้ำใต้ช่องกรอกทะเบียนรถในหน้าเพิ่มรถ */}
+                  {duplicateLicenseError &&
+                    !licensePlateErrors.licensePlate && (
+                      <p className="text-red-500 text-xs mb-2">{error}</p>
+                    )}
                 </>
               )}
             </div>
@@ -440,7 +460,8 @@ export default function RegisVipPage() {
         </div>
       )}
 
-      {error && (
+      {/* แสดงข้อความแจ้งเตือนทั่วไปที่ไม่ใช่ความผิดพลาดทะเบียนซ้ำ */}
+      {error && !duplicateLicenseError && (
         <div className="fixed bottom-20 left-0 right-0 flex justify-center">
           <p className="text-red-500 text-sm bg-white px-4 py-2 rounded-lg shadow">
             {error}
