@@ -100,7 +100,7 @@ export default function RegisPaymentPage() {
   };
 
   return (
-    <div className="flex flex-col justify-between min-h-screen bg-white">
+    <div className="flex flex-col justify-between bg-white">
       <div className="w-full px-4 pt-10">
         <div className="border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-[96px] items-center space-y-1 mb-8">
           <p className="text-md">เวลาที่เหลือสำหรับการชำระเงิน</p>
