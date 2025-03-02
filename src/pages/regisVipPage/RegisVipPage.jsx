@@ -187,12 +187,9 @@ export default function RegisVipPage() {
   };
 
   return (
-    <div className="w-full bg-white flex flex-col min-h-screen">
-      {/* ส่วนของเนื้อหาหลัก - ใช้ flex-grow เพื่อให้ขยายเต็มพื้นที่ว่าง */}
-      <div className="flex-grow px-4 pt-10 pb-32">
-        {" "}
-        {/* เพิ่ม pb-32 เพื่อสร้าง padding ด้านล่างให้เนื้อหาไม่ไปซ้อนทับกับปุ่ม */}
-        <div className="text-center mb-6 mt-[6rem]">
+    <div className="w-full bg-white">
+      <div className="px-4 pt-10">
+        <div className="text-center mb-6">
           <img src={vip} alt="VIP Icon" className="w-20 mx-auto mb-2" />
           <h1 className="text-xl font-bold">สมัครสมาชิก VIP</h1>
           <p className="text-sm font-medium">KMITL Parking</p>
@@ -210,6 +207,7 @@ export default function RegisVipPage() {
             </div>
           )}
         </div>
+
         {/* Phone Check Form */}
         {!showMoreFields && !isVip && (
           <div className="mt-[3rem]">
@@ -231,6 +229,7 @@ export default function RegisVipPage() {
             )}
           </div>
         )}
+
         {/* Registration Form */}
         {showMoreFields && !isVip && (
           <div className="mt-[3rem]">
@@ -305,6 +304,7 @@ export default function RegisVipPage() {
             )}
           </div>
         )}
+
         {/* Add Car Form */}
         {isVip && (
           <div className="mt-[3rem]">
@@ -348,8 +348,8 @@ export default function RegisVipPage() {
         )}
       </div>
 
-      {/* Fixed bottom buttons section - เปลี่ยนจาก absolute เป็น fixed */}
-      <div className="flex flex-col justify-center items-center space-y-4 w-full fixed bottom-0 p-5 border-t-[0.5px] border-gray-300 bg-white">
+      {/* Fixed bottom buttons section - using absolute positioning like in LandingPage */}
+      <div className="flex flex-col justify-center items-center space-y-4 w-full absolute bottom-0 p-5 border-t-[0.5px] border-gray-300">
         {!showMoreFields && !isVip && (
           <form onSubmit={handleSubmitPhone(checkPhone)} className="w-full">
             <button
@@ -373,10 +373,7 @@ export default function RegisVipPage() {
         )}
 
         {isVip && (
-          <form
-            onSubmit={handleSubmitLicensePlate(addCarToVip)}
-            className="w-full"
-          >
+          <form onSubmit={handleSubmitLicensePlate(addCarToVip)} className="w-full">
             {showAddCar ? (
               <button
                 type="submit"
@@ -457,9 +454,7 @@ export default function RegisVipPage() {
 
       {/* Error message */}
       {error && !duplicateLicenseError && (
-        <div className="fixed bottom-32 left-0 right-0 flex justify-center">
-          {" "}
-          {/* ปรับตำแหน่งให้สูงขึ้นจาก bottom-20 เป็น bottom-32 */}
+        <div className="fixed bottom-20 left-0 right-0 flex justify-center">
           <p className="text-red-500 text-sm bg-white px-4 py-2 rounded-lg shadow">
             {error}
           </p>
