@@ -202,7 +202,7 @@ function DetailPage() {
           entry_car_image_path: record.entry_car_image_path,
         }));
       }
-
+      console.log(`Requesting page ${page} with ${rowsPerPage} rows per page`);
       setData(formattedData);
 
       // Update pagination information
