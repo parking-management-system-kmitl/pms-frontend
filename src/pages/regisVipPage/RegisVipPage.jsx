@@ -187,7 +187,7 @@ export default function RegisVipPage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-white">
+    <div className="w-full bg-white">
       <div className="px-4 pt-10">
         <div className="text-center mb-6 mt-[6rem]">
           <img src={vip} alt="VIP Icon" className="w-20 mx-auto mb-2" />
