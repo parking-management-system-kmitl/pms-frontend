@@ -13,8 +13,10 @@ function LandingPage() {
   const [needNewPayment, setNeedNewPayment] = useState(false);
   const [newPaymentDetails, setNewPaymentDetails] = useState(null);
   const [isPaymentEnabled, setIsPaymentEnabled] = useState(false);
+  const [entryTime, setEntryTime] = useState(null); // New state for entry time
 
   const formatDateTime = (dateTime) => {
+    if (!dateTime) return "ไม่ระบุ";
     const date = new Date(dateTime);
     return date.toLocaleString("th-TH", {
       year: "numeric",
@@ -27,7 +29,6 @@ function LandingPage() {
   };
 
   useEffect(() => {
-    console.log("License Plate ID:", id);
     const fetchData = async () => {
       try {
         // Fetch latest payment history
@@ -35,6 +36,12 @@ function LandingPage() {
           `${process.env.REACT_APP_API_URL}/parking/lastestpaymenthistory/${id}`
         );
         const paymentResult = await paymentResponse.json();
+        console.log(paymentResult);
+
+        // Store entry time directly from the API response
+        if (paymentResult.entryTime) {
+          setEntryTime(paymentResult.entryTime);
+        }
 
         if (paymentResult.latestPayment) {
           setLatestPayment(paymentResult.latestPayment);
@@ -117,7 +124,8 @@ function LandingPage() {
 
   if (loading) return <p>Loading...</p>;
 
-  if (!parkingData && !latestPayment) return <p>ไม่พบข้อมูลการจอด</p>;
+  if (!parkingData && !latestPayment && !entryTime)
+    return <p>ไม่พบข้อมูลการจอด</p>;
 
   // Use parking data if available, otherwise use latest payment
   const displayData = parkingData || { lastPayment: latestPayment };
@@ -125,6 +133,7 @@ function LandingPage() {
 
   // Calculate duration in hours and minutes
   const getDuration = (startTime, currentTime) => {
+    if (!startTime || !currentTime) return { hours: 0, minutes: 0 };
     const start = new Date(startTime);
     const current = new Date(currentTime);
     const diffInMinutes = Math.floor((current - start) / (1000 * 60));
@@ -134,9 +143,12 @@ function LandingPage() {
     };
   };
 
-  const duration = parkingData
-    ? getDuration(parkingData.entryTime, parkingData.currentTime)
-    : { hours: 0, minutes: 0 };
+  const duration =
+    parkingData && parkingData.entryTime && parkingData.currentTime
+      ? getDuration(parkingData.entryTime, parkingData.currentTime)
+      : entryTime && parkingData?.currentTime
+      ? getDuration(entryTime, parkingData.currentTime)
+      : { hours: 0, minutes: 0 };
 
   const paymentAmount = parseFloat(
     newPaymentDetails?.amountAfterDiscount ||
@@ -160,7 +172,7 @@ function LandingPage() {
               <p className="text-lg">ประวัติการชำระเงินล่าสุด</p>
               <div className="flex justify-between">
                 <p>วันเวลาเข้า</p>
-                <p>{formatDateTime(displayData.lastPayment.entryTime)}</p>
+                <p>{formatDateTime(entryTime)}</p>
               </div>
               {displayData.lastPayment.exitTime && (
                 <div className="flex justify-between">
@@ -188,11 +200,11 @@ function LandingPage() {
               <p className="text-lg">รายละเอียดการจอดรถ</p>
               <div className="flex justify-between">
                 <p>วันเวลาเข้า</p>
-                <p>{formatDateTime(parkingData.entryTime)}</p>
+                <p>{formatDateTime(entryTime || parkingData?.entryTime)}</p>
               </div>
               <div className="flex justify-between">
                 <p>วันเวลาปัจจุบัน</p>
-                <p>{formatDateTime(parkingData.currentTime)}</p>
+                <p>{formatDateTime(parkingData?.currentTime)}</p>
               </div>
               <div className="flex justify-between">
                 <p>ระยะเวลาการจอด</p>
@@ -202,10 +214,6 @@ function LandingPage() {
               </div>
               {needNewPayment && newPaymentDetails && (
                 <>
-                  {/* <div className="flex justify-between">
-                    <p>เริ่มคิดค่าบริการต่อจาก</p>
-                    <p>{formatDateTime(newPaymentDetails.startTime)}</p>
-                  </div> */}
                   <div className="flex justify-between">
                     <p>ค่าบริการจอดรถ</p>
                     <p>{newPaymentDetails.originalAmount} บาท</p>
@@ -257,7 +265,9 @@ function LandingPage() {
           >
             ชำระเงิน
           </button>
-          <a href="/regisVip" className="text-blue-500 text-sm underline">สมัครสมาชิก VIP</a>
+          <a href="/regisVip" className="text-blue-500 text-sm underline">
+            สมัครสมาชิก VIP
+          </a>
         </div>
       )}
     </div>
