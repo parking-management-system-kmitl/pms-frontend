@@ -329,13 +329,6 @@ function CarDetailModal({
     return parseFloat(amount || 0).toFixed(2);
   };
 
-  const calculatePaidAmount = (payment) => {
-    if (!payment || !payment.paid_at) return "0.00";
-    const amount = parseFloat(payment.amount || 0);
-    const discount = parseFloat(payment.discount || 0);
-    return formatCurrency(amount - discount);
-  };
-
   const renderDiscountOptions = () => {
     if (isLoading) {
       return <option disabled>กำลังโหลดรายการส่วนลด...</option>;
@@ -358,44 +351,6 @@ function CarDetailModal({
         ))}
       </>
     );
-  };
-
-  // Additional info for new payment
-  const renderPaymentInfo = () => {
-    if (needNewPayment && newPaymentDetails) {
-      const startTime = new Date(
-        newPaymentDetails.startTime
-      ).toLocaleTimeString();
-      return (
-        <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mt-2 mb-2">
-          <h2 className="font-bold text-blue-500 text-sm mb-2">
-            ข้อมูลการชำระเงินใหม่
-          </h2>
-          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
-            เริ่มเวลา: <span>{startTime}</span>
-          </p>
-          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
-            จำนวนชั่วโมงที่จอด:{" "}
-            <span>{newPaymentDetails.parkedHours} ชั่วโมง</span>
-          </p>
-          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
-            ค่าบริการเดิม:{" "}
-            <span>{formatCurrency(newPaymentDetails.originalAmount)} บาท</span>
-          </p>
-          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
-            ส่วนลด:{" "}
-            <span>{formatCurrency(newPaymentDetails.discount)} บาท</span>
-          </p>
-          <p className="font-inter text-sm font-bold flex justify-between text-gray-600">
-            ชำระทั้งสิ้น:{" "}
-            <span>
-              {formatCurrency(newPaymentDetails.amountAfterDiscount)} บาท
-            </span>
-          </p>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (

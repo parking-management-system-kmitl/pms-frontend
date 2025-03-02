@@ -150,12 +150,6 @@ function LandingPage() {
       ? getDuration(entryTime, parkingData.currentTime)
       : { hours: 0, minutes: 0 };
 
-  const paymentAmount = parseFloat(
-    newPaymentDetails?.amountAfterDiscount ||
-      paymentDetails?.amountAfterDiscount ||
-      0
-  );
-
   return (
     <div>
       <div className="px-4 pt-10">
