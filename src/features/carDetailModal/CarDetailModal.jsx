@@ -16,6 +16,8 @@ function CarDetailModal({
   const [paymentStatus, setPaymentStatus] = useState("unpaid"); // Current payment status in UI
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [needNewPayment, setNeedNewPayment] = useState(false); // Original payment status from API
+  const [newPaymentDetails, setNewPaymentDetails] = useState(null); // Store new payment details
+  const [latestPayment, setLatestPayment] = useState(null); // Store latest payment details
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -78,20 +80,27 @@ function CarDetailModal({
             headers: getAuthHeaders(),
           }
         );
-
         if (!response.ok) {
           throw new Error("Failed to fetch payment status");
         }
 
         const data = await response.json();
+        console.log(data);
+
         // Set the payment status based on needNewPayment
         setNeedNewPayment(data.needNewPayment);
         setPaymentStatus(data.needNewPayment ? "unpaid" : "paid");
+
+        // Store the latest payment and new payment details
+        setLatestPayment(data.latestPayment);
+        setNewPaymentDetails(data.newPaymentDetails);
       } catch (err) {
         console.error("Error fetching payment status:", err);
         // Default to unpaid if there's an error
         setNeedNewPayment(true);
         setPaymentStatus("unpaid");
+        setLatestPayment(null);
+        setNewPaymentDetails(null);
       }
     };
 
@@ -202,29 +211,78 @@ function CarDetailModal({
 
   const rowType = getRowType(selectedRow);
 
+  // Calculate duration in hours and minutes, similar to LandingPage
+  const calculateDuration = (startTime, endTime) => {
+    const start = new Date(startTime);
+    const end = endTime ? new Date(endTime) : new Date();
+    const diffInMinutes = Math.floor((end - start) / (1000 * 60));
+    return {
+      hours: Math.floor(diffInMinutes / 60),
+      minutes: diffInMinutes % 60,
+    };
+  };
+
   const getData = () => {
     switch (rowType) {
       case "entry":
-        const entryPayment = selectedRow.payments?.[0] ||
-          selectedRow.payment || {
-            amount: "0.00",
-            discount: "0.00",
+        // Calculate duration
+        const entryDuration = calculateDuration(
+          selectedRow.entry_time,
+          null // Use current time for active parking
+        );
+
+        // Use new payment details if needNewPayment is true
+        if (needNewPayment && newPaymentDetails) {
+          const entryPayment = {
+            amount: newPaymentDetails.originalAmount.toString(),
+            discount: newPaymentDetails.discount,
             paid_at: null,
           };
 
-        return {
-          licensePlate: selectedRow.car.license_plate,
-          entryTime: new Date(selectedRow.entry_time).toLocaleTimeString(),
-          exitTime: "-",
-          parkedHours: selectedRow.parkedHours || 0,
-          fee: selectedRow.parkingFee || "0.00",
-          isVIP: selectedRow.isVip,
-          image: selectedRow.entry_car_image_path,
-          payment: entryPayment,
-          date: selectedRow.entry_time,
-          status: "กำลังจอด",
-        };
+          return {
+            licensePlate: selectedRow.car.license_plate,
+            entryTime: new Date(selectedRow.entry_time).toLocaleTimeString(),
+            exitTime: "-",
+            parkedHours: entryDuration.hours,
+            parkedMinutes: entryDuration.minutes,
+            fee: newPaymentDetails.amountAfterDiscount.toString(),
+            isVIP: selectedRow.isVip,
+            image: selectedRow.entry_car_image_path,
+            payment: entryPayment,
+            date: selectedRow.entry_time,
+            status: "กำลังจอด",
+            startTime: newPaymentDetails.startTime,
+          };
+        } else {
+          const entryPayment = selectedRow.payments?.[0] ||
+            selectedRow.payment ||
+            latestPayment || {
+              amount: "0.00",
+              discount: "0.00",
+              paid_at: null,
+            };
+
+          return {
+            licensePlate: selectedRow.car.license_plate,
+            entryTime: new Date(selectedRow.entry_time).toLocaleTimeString(),
+            exitTime: "-",
+            parkedHours: entryDuration.hours,
+            parkedMinutes: entryDuration.minutes,
+            fee: selectedRow.parkingFee || "0.00",
+            isVIP: selectedRow.isVip,
+            image: selectedRow.entry_car_image_path,
+            payment: entryPayment,
+            date: selectedRow.entry_time,
+            status: "กำลังจอด",
+          };
+        }
       case "exit":
+        // Calculate duration for completed parking
+        const exitDuration = calculateDuration(
+          selectedRow.entry_time,
+          selectedRow.exit_time
+        );
+
         const exitPayment = selectedRow.payments?.[0] || {
           amount: "0.00",
           discount: "0.00",
@@ -235,7 +293,8 @@ function CarDetailModal({
           licensePlate: selectedRow.car.license_plate,
           entryTime: new Date(selectedRow.entry_time).toLocaleTimeString(),
           exitTime: new Date(selectedRow.exit_time).toLocaleTimeString(),
-          parkedHours: selectedRow.parkedHours || 0,
+          parkedHours: exitDuration.hours,
+          parkedMinutes: exitDuration.minutes,
           fee: selectedRow.parkingFee || "0.00",
           isVIP: selectedRow.isVip,
           image: selectedRow.entry_car_image_path,
@@ -249,6 +308,7 @@ function CarDetailModal({
           entryTime: "",
           exitTime: "",
           parkedHours: 0,
+          parkedMinutes: 0,
           fee: "0.00",
           isVIP: false,
           image: "",
@@ -298,6 +358,44 @@ function CarDetailModal({
         ))}
       </>
     );
+  };
+
+  // Additional info for new payment
+  const renderPaymentInfo = () => {
+    if (needNewPayment && newPaymentDetails) {
+      const startTime = new Date(
+        newPaymentDetails.startTime
+      ).toLocaleTimeString();
+      return (
+        <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mt-2 mb-2">
+          <h2 className="font-bold text-blue-500 text-sm mb-2">
+            ข้อมูลการชำระเงินใหม่
+          </h2>
+          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
+            เริ่มเวลา: <span>{startTime}</span>
+          </p>
+          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
+            จำนวนชั่วโมงที่จอด:{" "}
+            <span>{newPaymentDetails.parkedHours} ชั่วโมง</span>
+          </p>
+          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
+            ค่าบริการเดิม:{" "}
+            <span>{formatCurrency(newPaymentDetails.originalAmount)} บาท</span>
+          </p>
+          <p className="font-inter text-sm mb-1 flex justify-between text-gray-500">
+            ส่วนลด:{" "}
+            <span>{formatCurrency(newPaymentDetails.discount)} บาท</span>
+          </p>
+          <p className="font-inter text-sm font-bold flex justify-between text-gray-600">
+            ชำระทั้งสิ้น:{" "}
+            <span>
+              {formatCurrency(newPaymentDetails.amountAfterDiscount)} บาท
+            </span>
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -421,6 +519,9 @@ function CarDetailModal({
               </button>
             </div>
 
+            {/* Add new payment details section */}
+            {/* {renderPaymentInfo()} */}
+
             <p className="font-bold mb-1 text-sm text-gray-600">ส่วนลดต่างๆ</p>
             <div className="relative inline-block w-full">
               <select
@@ -458,14 +559,18 @@ function CarDetailModal({
               เวลาออก: <span>{data.exitTime}</span>
             </p>
             <p className="font-inter text-sm mb-1 mt-3 flex justify-between text-gray-500">
-              ระยะเวลาการจอด: <span>{data.parkedHours} ชั่วโมง</span>
+              ระยะเวลาการจอด:{" "}
+              <span>
+                {data.parkedHours} ชม. {data.parkedMinutes} นาที
+              </span>
             </p>
             <p className="font-inter text-sm mb-1 mt-3 flex justify-between text-gray-500">
               ส่วนลด:{" "}
               <span>{formatCurrency(data.payment?.discount || 0)} บาท</span>
             </p>
             <p className="font-inter text-sm mb-3 mt-3 flex justify-between text-gray-500">
-              ชำระแล้ว: <span>{calculatePaidAmount(data.payment)} บาท</span>
+              ชำระแล้ว:{" "}
+              <span>{formatCurrency(data.payment?.amount || 0)} บาท</span>
             </p>
             <button
               className={`w-full h-10 rounded-lg ${
