@@ -42,7 +42,7 @@ export default function RegisVipPage() {
   const [vipCars, setVipCars] = useState([]);
   const [showAddCar, setShowAddCar] = useState(false);
   const [error, setError] = useState("");
-  const [duplicateLicenseError, setDuplicateLicenseError] = useState(false); // เพิ่ม state สำหรับเก็บสถานะความผิดพลาดทะเบียนซ้ำ
+  const [duplicateLicenseError, setDuplicateLicenseError] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [showModal, setShowModal] = useState(false);
 
@@ -81,7 +81,7 @@ export default function RegisVipPage() {
   const checkPhone = async (data) => {
     try {
       setError("");
-      setDuplicateLicenseError(false); // รีเซ็ตสถานะความผิดพลาดทะเบียนซ้ำ
+      setDuplicateLicenseError(false);
       const phone = data.phone;
       setPhoneNumber(phone);
 
@@ -112,7 +112,7 @@ export default function RegisVipPage() {
   const registerMember = async (data) => {
     try {
       setError("");
-      setDuplicateLicenseError(false); // รีเซ็ตสถานะความผิดพลาดทะเบียนซ้ำ
+      setDuplicateLicenseError(false);
       const prepareRegResponse = await axios.post(
         `${apiUrl}/member/preparereg`,
         {
@@ -139,7 +139,7 @@ export default function RegisVipPage() {
     } catch (error) {
       if (error.response?.status === 409) {
         setError("เลขทะเบียนรถนี้ถูกลงทะเบียนแล้ว");
-        setDuplicateLicenseError(true); // เซ็ตสถานะความผิดพลาดทะเบียนซ้ำเป็น true
+        setDuplicateLicenseError(true);
       } else {
         setError("การสมัครสมาชิกไม่สำเร็จ");
       }
@@ -149,7 +149,7 @@ export default function RegisVipPage() {
   const addCarToVip = async (data) => {
     try {
       setError("");
-      setDuplicateLicenseError(false); // รีเซ็ตสถานะความผิดพลาดทะเบียนซ้ำ
+      setDuplicateLicenseError(false);
       const response = await axios.post(`${apiUrl}/member/preparereg`, {
         phone: phoneNumber,
         licenseplate: data.licensePlate,
@@ -171,8 +171,7 @@ export default function RegisVipPage() {
     } catch (error) {
       if (error.response?.status === 409) {
         setError("เลขทะเบียนรถนี้ถูกลงทะเบียนแล้ว");
-        setDuplicateLicenseError(true); // เซ็ตสถานะความผิดพลาดทะเบียนซ้ำเป็น true
-        // ลบโค้ดเปิด modal เมื่อเกิดข้อผิดพลาด
+        setDuplicateLicenseError(true);
       } else {
         setError("การเพิ่มรถไม่สำเร็จ");
       }
@@ -183,242 +182,235 @@ export default function RegisVipPage() {
     navigate(-1);
   };
 
-  // New function to go back to the phone input form
   const handleBackToPhoneForm = () => {
     setShowMoreFields(false);
   };
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-screen bg-white">
-      <div className="w-full px-4 flex flex-col min-h-screen">
-        <div className="flex-grow">
-          <div className="text-center mb-6 mt-[6rem]">
-            <img src={vip} alt="VIP Icon" className="w-20 mx-auto mb-2" />
-            <h1 className="text-xl font-bold">สมัครสมาชิก VIP</h1>
-            <p className="text-sm font-medium">KMITL Parking</p>
-            {isVip && (
-              <div>
-                <p className="text-blue-500 text-sm font-medium mt-2">
-                  หมายเลขนี้ได้เป็นสมาชิก VIP แล้ว
-                </p>
-                <p
-                  className="text-blue-500 text-sm font-medium mt-1 underline cursor-pointer"
-                  onClick={() => setShowModal(true)}
-                >
-                  คลิกรายละเอียดเพิ่มเติม
-                </p>
-              </div>
+    <div className="w-full min-h-screen bg-white">
+      <div className="px-4 pt-10">
+        <div className="text-center mb-6 mt-[6rem]">
+          <img src={vip} alt="VIP Icon" className="w-20 mx-auto mb-2" />
+          <h1 className="text-xl font-bold">สมัครสมาชิก VIP</h1>
+          <p className="text-sm font-medium">KMITL Parking</p>
+          {isVip && (
+            <div>
+              <p className="text-blue-500 text-sm font-medium mt-2">
+                หมายเลขนี้ได้เป็นสมาชิก VIP แล้ว
+              </p>
+              <p
+                className="text-blue-500 text-sm font-medium mt-1 underline cursor-pointer"
+                onClick={() => setShowModal(true)}
+              >
+                คลิกรายละเอียดเพิ่มเติม
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Phone Check Form */}
+        {!showMoreFields && !isVip && (
+          <div className="mt-[3rem]">
+            <label className="block text-sm font-medium mb-2">
+              หมายเลขโทรศัพท์
+            </label>
+            <input
+              type="tel"
+              placeholder="กรอกเบอร์ติดต่อ"
+              {...registerPhone("phone")}
+              className={`mb-1 w-full border p-2 rounded ${
+                phoneErrors.phone ? "border-red-500" : ""
+              }`}
+            />
+            {phoneErrors.phone && (
+              <p className="text-red-500 text-xs mb-2">
+                {phoneErrors.phone.message}
+              </p>
             )}
           </div>
+        )}
 
-          {/* Phone Check Form */}
-          {!showMoreFields && !isVip && (
-            <div className="mt-[3rem]">
-              <label className="block text-sm font-medium mb-2">
-                หมายเลขโทรศัพท์
-              </label>
-              <input
-                type="tel"
-                placeholder="กรอกเบอร์ติดต่อ"
-                {...registerPhone("phone")}
-                className={`mb-1 w-full border p-2 rounded ${
-                  phoneErrors.phone ? "border-red-500" : ""
-                }`}
-              />
-              {phoneErrors.phone && (
-                <p className="text-red-500 text-xs mb-2">
-                  {phoneErrors.phone.message}
-                </p>
-              )}
-            </div>
-          )}
+        {/* Registration Form */}
+        {showMoreFields && !isVip && (
+          <div className="mt-[3rem]">
+            <label className="block text-sm font-medium mb-2">
+              หมายเลขโทรศัพท์
+            </label>
+            <input
+              type="tel"
+              placeholder="กรอกเบอร์ติดต่อ"
+              {...registerForm("phone")}
+              className={`mb-1 w-full border p-2 rounded ${
+                formErrors.phone ? "border-red-500" : ""
+              }`}
+              readOnly
+            />
+            {formErrors.phone && (
+              <p className="text-red-500 text-xs mb-2">
+                {formErrors.phone.message}
+              </p>
+            )}
 
-          {/* Registration Form */}
-          {showMoreFields && !isVip && (
-            <div className="mt-[3rem]">
-              <label className="block text-sm font-medium mb-2">
-                หมายเลขโทรศัพท์
-              </label>
-              <input
-                type="tel"
-                placeholder="กรอกเบอร์ติดต่อ"
-                {...registerForm("phone")}
-                className={`mb-1 w-full border p-2 rounded ${
-                  formErrors.phone ? "border-red-500" : ""
-                }`}
-                readOnly // Make the phone number field read-only
-              />
-              {formErrors.phone && (
-                <p className="text-red-500 text-xs mb-2">
-                  {formErrors.phone.message}
-                </p>
-              )}
+            <label className="block text-sm font-medium mb-2">ชื่อ</label>
+            <input
+              type="text"
+              placeholder="กรอกชื่อ"
+              {...registerForm("firstName")}
+              className={`mb-1 w-full border p-2 rounded ${
+                formErrors.firstName ? "border-red-500" : ""
+              }`}
+            />
+            {formErrors.firstName && (
+              <p className="text-red-500 text-xs mb-2">
+                {formErrors.firstName.message}
+              </p>
+            )}
 
-              <label className="block text-sm font-medium mb-2">ชื่อ</label>
-              <input
-                type="text"
-                placeholder="กรอกชื่อ"
-                {...registerForm("firstName")}
-                className={`mb-1 w-full border p-2 rounded ${
-                  formErrors.firstName ? "border-red-500" : ""
-                }`}
-              />
-              {formErrors.firstName && (
-                <p className="text-red-500 text-xs mb-2">
-                  {formErrors.firstName.message}
-                </p>
-              )}
+            <label className="block text-sm font-medium mb-2">นามสกุล</label>
+            <input
+              type="text"
+              placeholder="กรอกนามสกุล"
+              {...registerForm("lastName")}
+              className={`mb-1 w-full border p-2 rounded ${
+                formErrors.lastName ? "border-red-500" : ""
+              }`}
+            />
+            {formErrors.lastName && (
+              <p className="text-red-500 text-xs mb-2">
+                {formErrors.lastName.message}
+              </p>
+            )}
 
-              <label className="block text-sm font-medium mb-2">นามสกุล</label>
-              <input
-                type="text"
-                placeholder="กรอกนามสกุล"
-                {...registerForm("lastName")}
-                className={`mb-1 w-full border p-2 rounded ${
-                  formErrors.lastName ? "border-red-500" : ""
-                }`}
-              />
-              {formErrors.lastName && (
-                <p className="text-red-500 text-xs mb-2">
-                  {formErrors.lastName.message}
-                </p>
-              )}
+            <label className="block text-sm font-medium mb-2">
+              เลขทะเบียนรถ
+            </label>
+            <input
+              type="text"
+              placeholder="กรอกเลขทะเบียน"
+              {...registerForm("licensePlate")}
+              className={`mb-1 w-full border p-2 rounded ${
+                formErrors.licensePlate || duplicateLicenseError
+                  ? "border-red-500"
+                  : ""
+              }`}
+            />
+            {formErrors.licensePlate && (
+              <p className="text-red-500 text-xs mb-2">
+                {formErrors.licensePlate.message}
+              </p>
+            )}
+            {duplicateLicenseError && !formErrors.licensePlate && (
+              <p className="text-red-500 text-xs mb-2">{error}</p>
+            )}
+          </div>
+        )}
 
-              <label className="block text-sm font-medium mb-2">
-                เลขทะเบียนรถ
-              </label>
-              <input
-                type="text"
-                placeholder="กรอกเลขทะเบียน"
-                {...registerForm("licensePlate")}
-                className={`mb-1 w-full border p-2 rounded ${
-                  formErrors.licensePlate || duplicateLicenseError
-                    ? "border-red-500"
-                    : ""
-                }`}
-              />
-              {formErrors.licensePlate && (
-                <p className="text-red-500 text-xs mb-2">
-                  {formErrors.licensePlate.message}
-                </p>
-              )}
-              {/* แสดงข้อความแจ้งเตือนทะเบียนซ้ำใต้ช่องกรอกทะเบียนรถในหน้าลงทะเบียน */}
-              {duplicateLicenseError && !formErrors.licensePlate && (
-                <p className="text-red-500 text-xs mb-2">{error}</p>
-              )}
-            </div>
-          )}
+        {/* Add Car Form */}
+        {isVip && (
+          <div className="mt-[3rem]">
+            <label className="block text-sm font-medium mb-2">
+              หมายเลขโทรศัพท์
+            </label>
+            <input
+              type="tel"
+              placeholder="กรอกเบอร์ติดต่อ"
+              value={phoneNumber}
+              className="mb-4 w-full border p-2 rounded"
+              readOnly
+            />
 
-          {/* Add Car Form */}
-          {isVip && (
-            <div className="mt-[3rem]">
-              <label className="block text-sm font-medium mb-2">
-                หมายเลขโทรศัพท์
-              </label>
-              <input
-                type="tel"
-                placeholder="กรอกเบอร์ติดต่อ"
-                value={phoneNumber}
-                className="mb-4 w-full border p-2 rounded"
-                readOnly
-              />
-
-              {showAddCar && (
-                <>
-                  <label className="block text-sm font-medium mb-2">
-                    เลขทะเบียนรถ
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="กรอกเลขทะเบียน"
-                    {...registerLicensePlate("licensePlate")}
-                    className={`mb-1 w-full border p-2 rounded ${
-                      licensePlateErrors.licensePlate || duplicateLicenseError
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                  />
-                  {licensePlateErrors.licensePlate && (
-                    <p className="text-red-500 text-xs mb-2">
-                      {licensePlateErrors.licensePlate.message}
-                    </p>
-                  )}
-                  {/* แสดงข้อความแจ้งเตือนทะเบียนซ้ำใต้ช่องกรอกทะเบียนรถในหน้าเพิ่มรถ */}
-                  {duplicateLicenseError &&
-                    !licensePlateErrors.licensePlate && (
-                      <p className="text-red-500 text-xs mb-2">{error}</p>
-                    )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Fixed bottom buttons section */}
-        <div className="mb-10 mt-auto">
-          {!showMoreFields && !isVip && (
-            <form onSubmit={handleSubmitPhone(checkPhone)}>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
-              >
-                ถัดไป
-              </button>
-            </form>
-          )}
-
-          {showMoreFields && !isVip && (
-            <form onSubmit={handleSubmitForm(registerMember)}>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
-              >
-                สมัครสมาชิก
-              </button>
-            </form>
-          )}
-
-          {isVip && (
-            <form onSubmit={handleSubmitLicensePlate(addCarToVip)}>
-              {showAddCar ? (
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
-                >
-                  ยืนยัน
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
-                  onClick={() => setShowAddCar(true)}
-                >
-                  เพิ่มรถ
-                </button>
-              )}
-            </form>
-          )}
-
-          {/* Changed button text to "ย้อนกลับ" and changed function for the second form */}
-          {showMoreFields && !isVip ? (
-            <button
-              onClick={handleBackToPhoneForm}
-              className="w-full text-blue-600 text-sm font-medium"
-            >
-              ย้อนกลับ
-            </button>
-          ) : (
-            <button
-              onClick={handleBackToDetails}
-              className="w-full text-blue-600 text-sm font-medium"
-            >
-              กลับไปหน้ารายละเอียด
-            </button>
-          )}
-        </div>
+            {showAddCar && (
+              <>
+                <label className="block text-sm font-medium mb-2">
+                  เลขทะเบียนรถ
+                </label>
+                <input
+                  type="text"
+                  placeholder="กรอกเลขทะเบียน"
+                  {...registerLicensePlate("licensePlate")}
+                  className={`mb-1 w-full border p-2 rounded ${
+                    licensePlateErrors.licensePlate || duplicateLicenseError
+                      ? "border-red-500"
+                      : ""
+                  }`}
+                />
+                {licensePlateErrors.licensePlate && (
+                  <p className="text-red-500 text-xs mb-2">
+                    {licensePlateErrors.licensePlate.message}
+                  </p>
+                )}
+                {duplicateLicenseError && !licensePlateErrors.licensePlate && (
+                  <p className="text-red-500 text-xs mb-2">{error}</p>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Modal สำหรับแสดงข้อมูลรถที่ลงทะเบียนแล้ว */}
+      {/* Fixed bottom buttons section - using absolute positioning like in LandingPage */}
+      <div className="flex flex-col justify-center items-center space-y-4 w-full absolute bottom-0 p-5 border-t-[0.5px] border-gray-300">
+        {!showMoreFields && !isVip && (
+          <form onSubmit={handleSubmitPhone(checkPhone)} className="w-full">
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
+            >
+              ถัดไป
+            </button>
+          </form>
+        )}
+
+        {showMoreFields && !isVip && (
+          <form onSubmit={handleSubmitForm(registerMember)} className="w-full">
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
+            >
+              สมัครสมาชิก
+            </button>
+          </form>
+        )}
+
+        {isVip && (
+          <form onSubmit={handleSubmitLicensePlate(addCarToVip)} className="w-full">
+            {showAddCar ? (
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
+              >
+                ยืนยัน
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="w-full bg-blue-600 hover:bg-blue-700 rounded-3xl h-[44px] text-white mb-4"
+                onClick={() => setShowAddCar(true)}
+              >
+                เพิ่มรถ
+              </button>
+            )}
+          </form>
+        )}
+
+        {showMoreFields && !isVip ? (
+          <button
+            onClick={handleBackToPhoneForm}
+            className="w-full text-blue-600 text-sm font-medium"
+          >
+            ย้อนกลับ
+          </button>
+        ) : (
+          <button
+            onClick={handleBackToDetails}
+            className="w-full text-blue-600 text-sm font-medium"
+          >
+            กลับไปหน้ารายละเอียด
+          </button>
+        )}
+      </div>
+
+      {/* Modal for showing registered cars */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
           <div className="bg-white p-6 rounded-t-lg w-full">
@@ -460,7 +452,7 @@ export default function RegisVipPage() {
         </div>
       )}
 
-      {/* แสดงข้อความแจ้งเตือนทั่วไปที่ไม่ใช่ความผิดพลาดทะเบียนซ้ำ */}
+      {/* Error message */}
       {error && !duplicateLicenseError && (
         <div className="fixed bottom-20 left-0 right-0 flex justify-center">
           <p className="text-red-500 text-sm bg-white px-4 py-2 rounded-lg shadow">

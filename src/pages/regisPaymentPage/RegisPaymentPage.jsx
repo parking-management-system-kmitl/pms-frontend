@@ -12,7 +12,7 @@ export default function RegisPaymentPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { promotionData, carOwner, phone, licensePlate } = location.state || {};
-  
+
   const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -24,7 +24,7 @@ export default function RegisPaymentPage() {
     const initiatePayment = async () => {
       try {
         const response = await axios.post(`${apiUrl}/api/payments/initiate`, {
-          amount: promotionData?.price || "0"
+          amount: promotionData?.price || "0",
         });
 
         if (response.data.qrCodeUrl) {
@@ -41,7 +41,7 @@ export default function RegisPaymentPage() {
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setInterval(() => {
-        setTimeLeft(prevTime => prevTime - 1);
+        setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
 
       return () => clearInterval(timer);
@@ -64,7 +64,7 @@ export default function RegisPaymentPage() {
         await axios.post(`${apiUrl}/member/register`, {
           f_name: location.state?.firstName,
           l_name: location.state?.lastName,
-          phone: phone
+          phone: phone,
         });
       }
 
@@ -72,14 +72,14 @@ export default function RegisPaymentPage() {
       await axios.post(`${apiUrl}/member/link-car`, {
         phone: phone,
         licenseplate: licensePlate,
-        vip_days: promotionData?.days
+        vip_days: promotionData?.days,
       });
 
       navigate("/regisvipreceipt", {
         state: {
           paymentAmount: promotionData?.price,
-          vipDays: promotionData?.days
-        }
+          vipDays: promotionData?.days,
+        },
       });
     } catch (err) {
       setError("เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง");
@@ -90,9 +90,9 @@ export default function RegisPaymentPage() {
 
   const handleDownloadQR = () => {
     if (qrCodeUrl) {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = qrCodeUrl;
-      link.download = 'payment-qr.svg';
+      link.download = "payment-qr.svg";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -100,22 +100,30 @@ export default function RegisPaymentPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-screen bg-white">
-      <div className="px-4 pt-10">
+    <div className="flex flex-col justify-between min-h-screen bg-white">
+      <div className="w-full px-4 pt-10">
         <div className="border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-[96px] items-center space-y-1 mb-8">
           <p className="text-md">เวลาที่เหลือสำหรับการชำระเงิน</p>
           <p className="text-[#007AFF] text-2xl">{formatTime()}</p>
         </div>
 
-        <div className="w-[358px] h-[356px]">
-          <div className="border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center w-full h-auto items-center">
-            <div className="flex flex-col justify-center items-center h-auto w-full rounded-[20px] p-6 bg-white">
+        <div className="w-full flex justify-center">
+          <div className="w-full max-w-md border-gray-300 border-[0.5px] rounded-[20px] shadow-md flex flex-col justify-center items-center">
+            <div className="flex flex-col justify-center items-center w-full rounded-[20px] p-6 bg-white">
               {qrCodeUrl ? (
-                <img src={qrCodeUrl} alt="QR Code" className="w-[186px]" />
+                <img
+                  src={qrCodeUrl}
+                  alt="QR Code"
+                  className="w-full max-w-[186px]"
+                />
               ) : (
-                <img src={PromptPay} alt="PromptPay" className="w-[186px]" />
+                <img
+                  src={PromptPay}
+                  alt="PromptPay"
+                  className="w-full max-w-[186px]"
+                />
               )}
-              <div className="flex justify-center items-end space-x-2">
+              <div className="flex justify-center items-end space-x-2 mt-4">
                 <p className="text-md">ชำระเงินทั้งหมด: </p>
                 <p className="text-xl font-semibold">
                   {promotionData?.price || "0.00"}
@@ -127,34 +135,32 @@ export default function RegisPaymentPage() {
                   ระยะเวลา VIP: {promotionData.days} วัน
                 </p>
               )}
-              {error && (
-                <p className="text-sm text-red-500 mt-2">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
           </div>
-
-          {/* <div className="w-full flex justify-center items-center mt-6">
-            <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
-              <button 
-                onClick={handleDownloadQR}
-                disabled={!qrCodeUrl}
-                className="rounded-2xl border-[0.5px] p-2 border-gray-300 w-8 h-8 flex justify-center items-center"
-              >
-                <ArrowDownTrayIcon className="w-auto h-auto" />
-              </button>
-              <p className="mt-2 text-sm">บันทึก QR</p>
-            </div>
-          </div> */}
         </div>
+
+        {/* QR Download Button - Optional */}
+        {/* <div className="w-full flex justify-center items-center mt-6">
+          <div className="flex flex-col justify-center items-center w-auto h-auto p-2">
+            <button 
+              onClick={handleDownloadQR}
+              disabled={!qrCodeUrl}
+              className="rounded-2xl border-[0.5px] p-2 border-gray-300 w-8 h-8 flex justify-center items-center"
+            >
+              <ArrowDownTrayIcon className="w-auto h-auto" />
+            </button>
+            <p className="mt-2 text-sm">บันทึก QR</p>
+          </div>
+        </div> */}
       </div>
-      
-      <div className="w-full">
-        <hr className="w-full h-px my-4 px-0 bg-gray-200 border-0 dark:bg-gray-200" />
-        <div className="px-4">
+
+      <div className="w-full absolute bottom-0 border-t-[0.5px] border-gray-300">
+        <div className="px-4 py-5">
           <button
             onClick={handleConfirmPayment}
             disabled={isProcessing}
-            className={`w-full rounded-3xl h-[44px] text-white mb-[2rem] ${
+            className={`w-full rounded-3xl h-[44px] text-white ${
               isProcessing ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
