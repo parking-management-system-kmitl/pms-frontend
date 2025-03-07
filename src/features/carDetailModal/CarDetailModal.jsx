@@ -89,6 +89,7 @@ function CarDetailModal({
 
         // Set the payment status based on needNewPayment
         setNeedNewPayment(data.needNewPayment);
+        // Always set to "paid" if already paid, otherwise "unpaid"
         setPaymentStatus(data.needNewPayment ? "unpaid" : "paid");
 
         // Store the latest payment and new payment details
@@ -353,6 +354,9 @@ function CarDetailModal({
     );
   };
 
+  // Check if payment is already completed
+  const isPaid = !needNewPayment || data.status === "ออกแล้ว";
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-2xl shadow-lg w-[850px] relative">
@@ -428,12 +432,12 @@ function CarDetailModal({
             <div className="flex items-center space-x-2 mb-4">
               <div className="relative inline-block flex-grow">
                 <select
-                  value={paymentStatus}
+                  value={isPaid ? "paid" : paymentStatus}
                   onChange={(e) => setPaymentStatus(e.target.value)}
                   className={`w-full px-3 py-2 border-2 border-gray-300 rounded-md bg-gray-100 text-sm appearance-none focus:outline-none ${
-                    !needNewPayment ? "bg-gray-200 text-gray-500" : ""
+                    isPaid ? "bg-gray-200 text-gray-500" : ""
                   }`}
-                  disabled={!needNewPayment || isUpdatingPayment}
+                  disabled={isPaid || isUpdatingPayment}
                 >
                   <option value="unpaid">ยังไม่ชำระ</option>
                   <option value="paid">ชำระแล้ว</option>
@@ -457,25 +461,22 @@ function CarDetailModal({
               </div>
               <button
                 className={`px-4 py-2 rounded-md w-[111px] ${
-                  !needNewPayment ||
-                  isUpdatingPayment ||
-                  paymentStatus === "unpaid"
+                  isPaid || isUpdatingPayment || paymentStatus === "unpaid"
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-blue-500 text-white hover:bg-blue-600"
                 }`}
                 disabled={
-                  !needNewPayment ||
-                  isUpdatingPayment ||
-                  paymentStatus === "unpaid"
+                  isPaid || isUpdatingPayment || paymentStatus === "unpaid"
                 }
                 onClick={handlePaymentUpdate}
               >
-                {isUpdatingPayment ? "กำลังดำเนินการ..." : "ยืนยัน"}
+                {isUpdatingPayment
+                  ? "กำลังดำเนินการ..."
+                  : isPaid
+                  ? "ชำระแล้ว"
+                  : "ยืนยัน"}
               </button>
             </div>
-
-            {/* Add new payment details section */}
-            {/* {renderPaymentInfo()} */}
 
             <p className="font-bold mb-1 text-sm text-gray-600">ส่วนลดต่างๆ</p>
             <div className="relative inline-block w-full">
