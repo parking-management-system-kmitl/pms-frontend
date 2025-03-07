@@ -2,10 +2,10 @@ import React from "react";
 import {
   iconCar,
   iconVIP,
-  avatar,
   iconManage,
   iconDashboard,
 } from "../../../assets";
+import logo from "../../../assets/kmitl_logo.png";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ArrowLeftOnRectangleIcon } from "@heroicons/react/24/outline";
 
@@ -32,7 +32,7 @@ function NavbarAdmin() {
           <div className="flex flex-col space-y-4 justify-start items-center w-full mt-11">
             <div className="w-12 h-12">
               <img
-                src={avatar}
+                src={logo}
                 alt="Avatar"
                 className="w-full h-full rounded-full"
               />
