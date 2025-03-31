@@ -184,16 +184,17 @@ const Dashboard = () => {
         setError(null);
 
         const adjustedStartDate = new Date(start);
-        adjustedStartDate.setHours(0, 0, 0, 0);
+        adjustedStartDate.setHours(16, 0, 0, 0);
 
         const adjustedEndDate = new Date(end);
-        adjustedEndDate.setHours(23, 59, 59, 999);
+        adjustedEndDate.setHours(30, 59, 59, 999);
 
         const body = {
           startDate: adjustedStartDate.toISOString(),
           endDate: adjustedEndDate.toISOString(),
         };
 
+        console.log(body);
         // Get the token from localStorage
         const token = localStorage.getItem("access_token");
 
